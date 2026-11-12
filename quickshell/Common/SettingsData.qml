@@ -281,7 +281,7 @@ Singleton {
     property bool barElevationEnabled: true
     onBarElevationEnabledChanged: saveSettings()
 
-    property bool blurEnabled: false
+    property bool blurEnabled: true
     onBlurEnabledChanged: saveSettings()
     property bool blurForegroundLayers: true
     onBlurForegroundLayersChanged: saveSettings()

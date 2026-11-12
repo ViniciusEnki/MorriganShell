@@ -11,7 +11,7 @@ Singleton {
     id: root
     readonly property var log: Log.scoped("BlurService")
 
-    property bool compositorSupported: false
+    readonly property bool compositorSupported: CompositorService.isHyprland
     readonly property bool available: compositorSupported
     readonly property bool enabled: available && (SettingsData.blurEnabled ?? false)
 
@@ -47,26 +47,10 @@ Singleton {
         value: root.enabled
     }
 
-    Process {
-        id: blurProbe
-        running: false
-        command: ["dms", "blur", "check"]
-
-        stdout: StdioCollector {
-            onStreamFinished: {
-                root.compositorSupported = text.trim() === "supported";
-                if (root.compositorSupported)
-                    log.info("Compositor supports ext-background-effect-v1");
-                else
-                    log.info("Compositor does not support ext-background-effect-v1");
-            }
-        }
-
-        onExited: exitCode => {
-            if (exitCode !== 0)
-                log.warn("blur probe failed with code:", exitCode);
-        }
+    onCompositorSupportedChanged: {
+        if (compositorSupported)
+            log.info("Compositor supports ext-background-effect-v1 (Hyprland)");
+        else
+            log.info("Compositor does not support ext-background-effect-v1");
     }
-
-    Component.onCompleted: blurProbe.running = true
 }

@@ -107,7 +107,7 @@ var SPEC = {
     modalElevationEnabled: { def: true },
     popoutElevationEnabled: { def: true },
     barElevationEnabled: { def: true },
-    blurEnabled: { def: false },
+    blurEnabled: { def: true },
     blurForegroundLayers: { def: true },
     foregroundLayerTransparency: { def: 1.0, coerce: percentToUnit },
     blurLayerOutlineOpacity: { def: 0.12, coerce: percentToUnit },
