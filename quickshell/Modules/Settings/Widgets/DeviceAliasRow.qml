@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Controls
 import qs.Common
 import qs.Services
 import qs.Widgets
@@ -51,13 +52,23 @@ Rectangle {
             spacing: Theme.spacingXXS
 
             StyledText {
+                id: displayedNameText
                 text: root.displayedName
                 font.pixelSize: Theme.fontSizeMedium
                 font.weight: Font.Medium
                 color: Theme.surfaceText
                 width: parent.width
                 elide: Text.ElideRight
+                wrapMode: Text.NoWrap
                 horizontalAlignment: Text.AlignLeft
+
+                HoverHandler {
+                    id: displayedNameHover
+                }
+
+                ToolTip.visible: displayedNameHover.hovered && displayedNameText.truncated
+                ToolTip.text: displayedNameText.text
+                ToolTip.delay: 500
             }
 
             Column {
@@ -69,13 +80,23 @@ Rectangle {
                     spacing: Theme.spacingS
 
                     StyledText {
+                        id: deviceNameText
                         text: root.deviceNode?.name ?? ""
                         font.pixelSize: Theme.fontSizeSmall
                         color: Theme.surfaceVariantText
                         width: parent.width - (customAliasLabel.visible ? customAliasLabel.width + Theme.spacingS : 0)
                         elide: Text.ElideRight
+                        wrapMode: Text.NoWrap
                         anchors.verticalCenter: parent.verticalCenter
                         horizontalAlignment: Text.AlignLeft
+
+                        HoverHandler {
+                            id: deviceNameHover
+                        }
+
+                        ToolTip.visible: deviceNameHover.hovered && deviceNameText.truncated
+                        ToolTip.text: deviceNameText.text
+                        ToolTip.delay: 500
                     }
 
                     Rectangle {
@@ -99,14 +120,24 @@ Rectangle {
                 }
 
                 StyledText {
+                    id: originalNameText
                     visible: root.hasCustomAlias
                     text: I18n.tr("Original: %1").arg(AudioService.originalName(root.deviceNode))
                     font.pixelSize: Theme.fontSizeSmall - 1
                     color: Theme.surfaceVariantText
                     width: parent.width
                     elide: Text.ElideRight
+                    wrapMode: Text.NoWrap
                     opacity: 0.6
                     horizontalAlignment: Text.AlignLeft
+
+                    HoverHandler {
+                        id: originalNameHover
+                    }
+
+                    ToolTip.visible: originalNameHover.hovered && originalNameText.truncated
+                    ToolTip.text: originalNameText.text
+                    ToolTip.delay: 500
                 }
             }
         }
