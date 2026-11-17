@@ -133,9 +133,7 @@ core/dms
 
 core/internal/shellembed/dist
 
-
-.agents
-AGENTS.md
-
-.agents
-AGENTS.md
+# Excluded from version control
+/.agents/
+/docs/
+/AGENTS.md
