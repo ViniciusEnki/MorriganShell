@@ -16,6 +16,7 @@ StyledRect {
     property int iconSizeIndex: 1
     property int selectedIndex: -1
     property bool keyboardNavigationActive: false
+    property bool folderMode: false
 
     signal itemClicked(int index, string path, string name, bool isDir)
     signal itemSelected(int index, string path, string name, bool isDir)

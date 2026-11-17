@@ -23,6 +23,13 @@ FloatingWindow {
     property bool shouldBeVisible: visible
     property bool allowStacking: true
 
+    onFolderModeChanged: {
+        console.log("[FileBrowserModal] folderMode changed", { folderMode: folderMode, browserType: browserType });
+    }
+    onBrowserTypeChanged: {
+        console.log("[FileBrowserModal] browserType changed", { browserType: browserType, folderMode: folderMode });
+    }
+
     readonly property var _screen: screen ?? (Quickshell.screens.length > 0 ? Quickshell.screens[0] : null)
     readonly property int screenWidth: _screen?.width ?? 1920
     readonly property int screenHeight: _screen?.height ?? 1080
@@ -107,6 +114,7 @@ FloatingWindow {
 
             onFileSelected: path => {
                 const cleanPath = path.startsWith("file://") ? decodeURIComponent(path.substring(7)) : path;
+                console.log("[FileBrowserModal] onFileSelected", { rawPath: path, cleanPath: cleanPath, folderMode: folderMode, browserType: browserType });
                 fileBrowserModal.fileSelected(cleanPath);
             }
             onCloseRequested: fileBrowserModal.close()

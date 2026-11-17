@@ -112,8 +112,8 @@ Row {
             stateColor: Style.primaryText
             cornerRadius: Style.cornerRadius
             onClicked: {
-                var path = (selectedFilePath !== "" && selectedFileIsDir) ? selectedFilePath : currentPath;
-                var basePath = path.replace(/^file:\/\//, '');
+                var basePath = currentPath.replace(/^file:\/\//, '');
+                console.log("[FileBrowserSaveRow] Use this folder clicked", { currentPath: currentPath, basePath: basePath });
                 saveRow.folderSelected(basePath);
             }
         }

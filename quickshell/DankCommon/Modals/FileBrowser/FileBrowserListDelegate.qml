@@ -15,6 +15,7 @@ StyledRect {
 
     property int selectedIndex: -1
     property bool keyboardNavigationActive: false
+    property bool folderMode: false
     readonly property bool compactLayout: width < Style.smallBreakpoint
 
     signal itemClicked(int index, string path, string name, bool isDir)

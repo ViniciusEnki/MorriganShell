@@ -3,8 +3,10 @@ import QtCore
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Window
+import Quickshell.Io
 import qs.DankCommon.Common
 import qs.DankCommon.Widgets
+import qs.DankCommon.Modals.FileBrowser
 
 FocusScope {
     id: root
@@ -56,6 +58,11 @@ FocusScope {
     property bool _initialized: false
     property bool closeOnEscape: true
     property var windowControls: null
+    property bool _resetting: false
+
+    readonly property bool useRecursiveModel: browserType === "wallpaper" && !folderMode
+    readonly property var _log: Log.scoped("FileBrowserContent")
+readonly property string _componentVersion: "v20241115c"
 
     signal fileSelected(string path)
     signal closeRequested
@@ -67,13 +74,17 @@ FocusScope {
     }
 
     function initialize() {
+        _log.info("initialize()", { browserType: browserType, folderMode: folderMode, useRecursiveModel: useRecursiveModel, fileExtensions: fileExtensions });
         loadSettings();
         currentPath = getLastPath();
         _initialized = true;
     }
 
     function reset() {
+        _log.info("reset()", { browserType: browserType, folderMode: folderMode, useRecursiveModel: useRecursiveModel });
+        _resetting = true;
         currentPath = getLastPath();
+        _resetting = false;
         selectedIndex = -1;
         keyboardNavigationActive = false;
         backButtonFocused = false;
@@ -209,11 +220,13 @@ FocusScope {
     }
 
     function activateFile(path, name, isDir) {
+        _log.info("activateFile", { path: path, name: name, isDir: isDir, folderMode: folderMode, saveMode: saveMode });
         if (isDir) {
             navigateTo(path);
             return;
         }
         if (folderMode) {
+            _log.info("activateFile: folderMode=true, ignoring file selection");
             return;
         }
         if (saveMode) {
@@ -227,6 +240,7 @@ FocusScope {
     }
 
     function handleSaveFile(filePath) {
+        _log.info("handleSaveFile", { filePath: filePath, folderMode: folderMode });
         var normalizedPath = filePath;
         if (!normalizedPath.startsWith("file://")) {
             normalizedPath = encodeFileUrl(filePath);
@@ -234,9 +248,13 @@ FocusScope {
 
         var exists = false;
         var fileName = filePath.split('/').pop();
+        var model = root.activeModel;
 
-        for (var i = 0; i < folderModel.count; i++) {
-            if (folderModel.get(i, "fileName") === fileName && !folderModel.get(i, "fileIsDir")) {
+        for (var i = 0; i < model.count; i++) {
+            var item = model.get(i);
+            var itemName = item.fileName !== undefined ? item.fileName : model.get(i, "fileName");
+            var itemIsDir = item.fileIsDir !== undefined ? item.fileIsDir : model.get(i, "fileIsDir");
+            if (itemName === fileName && !itemIsDir) {
                 exists = true;
                 break;
             }
@@ -246,20 +264,25 @@ FocusScope {
             pendingFilePath = normalizedPath;
             showOverwriteConfirmation = true;
         } else {
+            _log.info("handleSaveFile: selecting file", { normalizedPath: normalizedPath });
             fileSelected(normalizedPath);
             closeRequested();
         }
     }
 
     onCurrentPathChanged: {
+        _log.info("onCurrentPathChanged", { currentPath: currentPath, useRecursiveModel: useRecursiveModel, browserType: browserType, folderMode: folderMode });
         selectedFilePath = "";
         selectedFileName = "";
         selectedFileIsDir = false;
         saveSettings();
+        if (root.useRecursiveModel && !_resetting) {
+            Qt.callLater(() => recursiveModel.start());
+        }
     }
 
     onSelectedIndexChanged: {
-        if (selectedIndex >= 0 && folderModel && selectedIndex < folderModel.count) {
+        if (selectedIndex >= 0 && root.activeModel && selectedIndex < root.activeModel.count) {
             selectedFilePath = "";
             selectedFileName = "";
             selectedFileIsDir = false;
@@ -334,10 +357,60 @@ FocusScope {
         sortReversed: !sortAscending
     }
 
+    RecursiveFileModel {
+        id: recursiveModel
+        folder: currentPath || homeDir
+        nameFilters: fileExtensions
+        showHidden: root.showHiddenFiles
+        showDirs: true
+        sortField: root.sortBy === "name" ? 0 : root.sortBy === "size" ? 1 : root.sortBy === "modified" ? 2 : 3
+        sortReversed: !sortAscending
+        recursive: root.useRecursiveModel
+        onErrorOccurred: msg => {
+            log.warn("RecursiveFileModel error:", msg);
+        }
+        onRunFindCommand: (command, generation) => {
+            findProcess.currentGeneration = generation;
+            findProcess.command = command;
+            findProcess.running = true;
+        }
+    }
+
+    Connections {
+        target: recursiveModel
+        function onModelReady() {
+        }
+    }
+
+    // Process for running find command (moved here from RecursiveFileModel where it failed)
+    Process {
+        id: findProcess
+        property int currentGeneration: 0
+        running: false
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                recursiveModel.onFindFinished(text, findProcess.currentGeneration);
+            }
+        }
+        stderr: StdioCollector {
+            onStreamFinished: {
+                if (text && text.trim()) {
+                    log.warn("find stderr:", { stderr: text.trim(), generation: findProcess.currentGeneration });
+                }
+            }
+        }
+        onExited: {
+            // recursiveModel._onFindExited is handled via onFindFinished
+        }
+    }
+
+    property var activeModel: root.useRecursiveModel ? recursiveModel.model : folderModel
+
     QtObject {
         id: keyboardController
 
-        property int totalItems: folderModel.count
+        property int totalItems: root.activeModel.count
         property int gridColumns: viewMode === "list" ? 1 : Math.max(1, actualGridColumns)
 
         function handleKey(event) {
@@ -785,7 +858,7 @@ FocusScope {
                             cellWidth: gridContainer.gridCellWidth
                             cellHeight: gridContainer.gridCellHeight
                             cacheBuffer: 260
-                            model: folderModel
+                            model: root.activeModel
                             currentIndex: selectedIndex
                             onCurrentIndexChanged: {
                                 if (keyboardNavigationActive && currentIndex >= 0)
@@ -805,13 +878,18 @@ FocusScope {
                                 iconSizeIndex: root.iconSizeIndex
                                 selectedIndex: root.selectedIndex
                                 keyboardNavigationActive: root.keyboardNavigationActive
+                                folderMode: root.folderMode
                                 onItemClicked: (index, path, name, isDir) => {
                                     selectedIndex = index;
-                                    setSelectedFileData(path, name, isDir);
+                                    if (!root.folderMode || isDir) {
+                                        setSelectedFileData(path, name, isDir);
+                                    }
                                     root.activateFile(path, name, isDir);
                                 }
                                 onItemSelected: (index, path, name, isDir) => {
-                                    setSelectedFileData(path, name, isDir);
+                                    if (!root.folderMode || isDir) {
+                                        setSelectedFileData(path, name, isDir);
+                                    }
                                 }
                                 onItemContextMenuRequested: (sender, localX, localY, path, name, isDir) => {
                                     root.openItemContextMenu(sender, localX, localY, path, name, isDir);
@@ -841,7 +919,7 @@ FocusScope {
                             anchors.bottomMargin: Style.spacingS
                             visible: viewMode === "list"
                             spacing: Style.spacingXXS
-                            model: folderModel
+                            model: root.activeModel
                             currentIndex: selectedIndex
                             onCurrentIndexChanged: {
                                 if (keyboardNavigationActive && currentIndex >= 0)
@@ -856,13 +934,18 @@ FocusScope {
                                 width: fileList.width
                                 selectedIndex: root.selectedIndex
                                 keyboardNavigationActive: root.keyboardNavigationActive
+                                folderMode: root.folderMode
                                 onItemClicked: (index, path, name, isDir) => {
                                     selectedIndex = index;
-                                    setSelectedFileData(path, name, isDir);
+                                    if (!root.folderMode || isDir) {
+                                        setSelectedFileData(path, name, isDir);
+                                    }
                                     root.activateFile(path, name, isDir);
                                 }
                                 onItemSelected: (index, path, name, isDir) => {
-                                    setSelectedFileData(path, name, isDir);
+                                    if (!root.folderMode || isDir) {
+                                        setSelectedFileData(path, name, isDir);
+                                    }
                                 }
                                 onItemContextMenuRequested: (sender, localX, localY, path, name, isDir) => {
                                     root.openItemContextMenu(sender, localX, localY, path, name, isDir);
@@ -900,6 +983,7 @@ FocusScope {
                 selectedFileIsDir: root.selectedFileIsDir
                 onSaveRequested: filePath => handleSaveFile(filePath)
                 onFolderSelected: folderPath => {
+                    _log.info("onFolderSelected callback", { folderPath: folderPath, currentPath: currentPath });
                     fileSelected(folderPath);
                     root.closeRequested();
                 }
@@ -924,7 +1008,7 @@ FocusScope {
                 width: Math.min(300, parent.width - Style.spacingL * 2)
                 showFileInfo: root.showFileInfo
                 selectedIndex: root.selectedIndex
-                sourceFolderModel: folderModel
+                sourceFolderModel: root.activeModel
                 currentPath: root.currentPath
                 currentFileName: root.selectedFileName
                 currentFileIsDir: root.selectedFileIsDir
@@ -977,8 +1061,12 @@ FocusScope {
         onTrashed: {
             if (selectedFilePath === itemContextMenu.filePath)
                 setSelectedFileData("", "", false);
-            folderModel.folder = "";
-            folderModel.folder = Qt.binding(() => root.encodeFileUrl(root.currentPath || root.homeDir));
+            if (root.useRecursiveModel) {
+                recursiveModel.start();
+            } else {
+                folderModel.folder = "";
+                folderModel.folder = Qt.binding(() => root.encodeFileUrl(root.currentPath || root.homeDir));
+            }
         }
     }
 }
