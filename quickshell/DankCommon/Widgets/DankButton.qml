@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls 2.15
 import qs.DankCommon.Common
 import qs.DankCommon.Widgets
 
@@ -16,6 +17,7 @@ Rectangle {
     property int horizontalPadding: Style.spacingL
     property bool enableScaleAnimation: false
     property bool enableRipple: Style.enableRippleEffects
+    property string toolTip: ""
 
     signal clicked
 
@@ -26,6 +28,11 @@ Rectangle {
     opacity: enabled ? 1 : 0.4
     scale: (enableScaleAnimation && pressed) ? 0.98 : 1.0
     activeFocusOnTab: enabled
+
+    ToolTip.visible: hovered && toolTip !== ""
+    ToolTip.text: toolTip
+    ToolTip.delay: 500
+    ToolTip.timeout: 5000
 
     Keys.onPressed: event => {
         if (!root.enabled)
