@@ -81,7 +81,7 @@ Rectangle {
     function leaveHiddenTab(tabIndex) {
         if (currentIndex !== tabIndex)
             return;
-        tabChangeRequested(resolveTabIndex("dankbar_settings"));
+        tabChangeRequested(resolveTabIndex("topbar_settings"));
     }
 
     Connections {

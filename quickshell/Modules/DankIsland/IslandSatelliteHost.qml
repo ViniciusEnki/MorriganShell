@@ -4,7 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import qs.Common
-import qs.Modules.DankBar
+import qs.Modules.TopBar
 import qs.Services
 
 Item {
@@ -413,7 +413,7 @@ Item {
         }
     }
 
-    DankBarContent {
+    TopBarContent {
         id: componentProvider
 
         width: 0

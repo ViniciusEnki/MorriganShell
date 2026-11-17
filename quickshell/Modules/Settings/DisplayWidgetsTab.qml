@@ -413,7 +413,7 @@ Item {
                                             } else {
                                                 root.setScreenPreferences(parent.componentId, []);
                                                 const cid = parent.componentId;
-                                                if (["dankBar", "dock", "notifications", "osd", "toast"].includes(cid) || cid.startsWith("bar:")) {
+                                                if (["topBar", "dock", "notifications", "osd", "toast"].includes(cid) || cid.startsWith("bar:")) {
                                                     root.setShowOnLastDisplay(cid, true);
                                                 }
                                             }
@@ -437,7 +437,7 @@ Item {
                                             const prefs = root.getScreenPreferences(parent.componentId);
                                             const isAll = prefs.includes("all") || (typeof prefs[0] === "string" && prefs[0] === "all");
                                             const cid = parent.componentId;
-                                            const isRelevantComponent = ["dankBar", "dock", "notifications", "osd", "toast", "notepad"].includes(cid) || cid.startsWith("bar:");
+                                            const isRelevantComponent = ["topBar", "dock", "notifications", "osd", "toast", "notepad"].includes(cid) || cid.startsWith("bar:");
                                             return !isAll && isRelevantComponent;
                                         }
                                         onToggled: checked => {

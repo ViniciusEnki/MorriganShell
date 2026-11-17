@@ -54,11 +54,11 @@ BasePill {
                         "pciId": pciId
                     };
                     if (sectionId === "left") {
-                        SettingsData.setDankBarLeftWidgets(widgets);
+                        SettingsData.setTopBarLeftWidgets(widgets);
                     } else if (sectionId === "center") {
-                        SettingsData.setDankBarCenterWidgets(widgets);
+                        SettingsData.setTopBarCenterWidgets(widgets);
                     } else if (sectionId === "right") {
-                        SettingsData.setDankBarRightWidgets(widgets);
+                        SettingsData.setTopBarRightWidgets(widgets);
                     }
                     return;
                 }

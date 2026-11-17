@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell
 import qs.Common
-import qs.Modules.DankBar
+import qs.Modules.TopBar
 import qs.Modules.DankIsland
 import qs.Modules.Frame
 import qs.Modules.WorkspaceOverlays
@@ -16,7 +16,7 @@ Item {
     property int pendingFrameTransitionRevision: 0
     property bool frameSurfacesLoaded: true
 
-    property alias dankBarRepeater: dankBarRepeater
+    property alias topBarRepeater: topBarRepeater
     property alias hyprlandOverviewLoader: hyprlandOverviewLoader
 
     signal surfaceRecoveryPass
@@ -43,7 +43,7 @@ Item {
 
     function recreateBarSurfaces() {
         log.info("Recreating bar surfaces, screens:", Quickshell.screens.length, Quickshell.screens.map(s => s.name).join(","));
-        dankBarRepeater.horizontalReady = 0;
+        topBarRepeater.horizontalReady = 0;
         if (barSurfacesLoaded)
             barSurfacesLoaded = false;
         barSurfaceReloadAction.schedule();
@@ -85,7 +85,7 @@ Item {
 
     Connections {
         target: SettingsData
-        function onForceDankBarLayoutRefresh() {
+        function onForceTopBarLayoutRefresh() {
             root.recreateBarSurfaces();
         }
     }
@@ -108,13 +108,13 @@ Item {
     }
 
     Repeater {
-        id: dankBarRepeater
+        id: topBarRepeater
         model: ScriptModel {
             id: barRepeaterModel
             values: JSON.parse(root._barLayoutStateJson)
         }
 
-        Component.onCompleted: BarWidgetService.dankBarRepeater = dankBarRepeater
+        Component.onCompleted: BarWidgetService.topBarRepeater = topBarRepeater
 
         property var hyprlandOverviewLoaderRef: hyprlandOverviewLoader
 
@@ -138,13 +138,13 @@ Item {
             required property var modelData
             property var barConfig: SettingsData.barConfigs.find(cfg => cfg.id === modelData.id) || null
             readonly property bool isVertical: modelData.position === SettingsData.Position.Left || modelData.position === SettingsData.Position.Right
-            active: root.barSurfacesLoaded && (barConfig?.enabled ?? false) && (!isVertical || dankBarRepeater.horizontalReady >= dankBarRepeater.horizontalWanted)
+            active: root.barSurfacesLoaded && (barConfig?.enabled ?? false) && (!isVertical || topBarRepeater.horizontalReady >= topBarRepeater.horizontalWanted)
             asynchronous: false
-            onItemChanged: dankBarRepeater.recountHorizontalReady()
+            onItemChanged: topBarRepeater.recountHorizontalReady()
 
-            sourceComponent: DankBar {
+            sourceComponent: TopBar {
                 barConfig: barLoader.barConfig
-                hyprlandOverviewLoader: dankBarRepeater.hyprlandOverviewLoaderRef
+                hyprlandOverviewLoader: topBarRepeater.hyprlandOverviewLoaderRef
             }
         }
     }

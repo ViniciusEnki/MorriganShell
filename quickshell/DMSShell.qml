@@ -22,7 +22,7 @@ import qs.Widgets
 import qs.Modules.Notifications.Popup
 import qs.Modules.OSD
 import qs.Modules.ProcessList
-import qs.Modules.DankBar.Popouts
+import qs.Modules.TopBar.Popouts
 import qs.Modules.WorkspaceOverlays
 import qs.Modules.Settings.DisplayConfig
 import qs.Services
@@ -1166,7 +1166,7 @@ Item {
         dankDashPopoutLoader: dankDashPopoutLoader
         notepadSlideoutVariants: notepadSlideoutVariants
         hyprKeybindsModalLoader: hyprKeybindsModalLoader
-        dankBarRepeater: root.core?.dankBarRepeater ?? null
+        topBarRepeater: root.core?.topBarRepeater ?? null
         hyprlandOverviewLoader: root.core?.hyprlandOverviewLoader ?? null
         workspaceRenameModalLoader: workspaceRenameModalLoader
         windowRuleModalLoader: windowRuleModalLoader

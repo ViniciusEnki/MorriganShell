@@ -413,9 +413,9 @@ Item {
                     GreeterSettingsCard {
                         width: (parent.width - Theme.spacingS) / 2
                         iconName: "toolbar"
-                        title: I18n.tr("DankBar", "greeter settings link")
-                        description: I18n.tr("Widgets, layout, style", "greeter dankbar description")
-                        onClicked: PopoutService.openSettingsWithTab("dankbar_settings")
+                        title: I18n.tr("TopBar", "greeter settings link")
+                        description: I18n.tr("Widgets, layout, style", "greeter topbar description")
+                        onClicked: PopoutService.openSettingsWithTab("topbar_settings")
                     }
 
                     GreeterSettingsCard {

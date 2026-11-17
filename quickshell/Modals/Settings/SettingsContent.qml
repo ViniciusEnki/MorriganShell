@@ -101,7 +101,7 @@ FocusScope {
             visible: active
             focus: active
 
-            sourceComponent: DankBarTab {
+            sourceComponent: TopBarTab {
                 parentModal: root.parentModal
             }
 
@@ -165,13 +165,13 @@ FocusScope {
         }
 
         Loader {
-            id: dankBarAppearanceLoader
+            id: topBarAppearanceLoader
             anchors.fill: parent
             active: root.currentIndex === 6
             visible: active
             focus: active
 
-            sourceComponent: DankBarAppearanceTab {
+            sourceComponent: TopBarAppearanceTab {
                 parentModal: root.parentModal
             }
 

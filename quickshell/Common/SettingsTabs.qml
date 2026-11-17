@@ -53,24 +53,24 @@ Singleton {
             ]
         },
         {
-            "id": "dankbar",
+            "id": "topbar",
             "text": I18n.tr("Bar"),
             "icon": "toolbar",
             "children": [
                 {
-                    "id": "dankbar_appearance",
+                    "id": "topbar_appearance",
                     "text": I18n.tr("Appearance"),
                     "icon": "palette",
                     "tabIndex": 6
                 },
                 {
-                    "id": "dankbar_settings",
+                    "id": "topbar_settings",
                     "text": I18n.tr("General"),
                     "icon": "tune",
                     "tabIndex": 3
                 },
                 {
-                    "id": "dankbar_widgets",
+                    "id": "topbar_widgets",
                     "text": I18n.tr("Widgets"),
                     "icon": "widgets",
                     "tabIndex": 22

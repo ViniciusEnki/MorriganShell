@@ -12,8 +12,8 @@ Item {
 
     signal barReady(var barConfig)
 
-    Component.onCompleted: BarWidgetService.registerDankBarItem(root.barConfig?.id, root)
-    Component.onDestruction: BarWidgetService.unregisterDankBarItem(root.barConfig?.id, root)
+    Component.onCompleted: BarWidgetService.registerTopBarItem(root.barConfig?.id, root)
+    Component.onDestruction: BarWidgetService.unregisterTopBarItem(root.barConfig?.id, root)
 
     property alias barVariants: barVariants
     property var hyprlandOverviewLoader: null
@@ -175,7 +175,7 @@ Item {
             });
         }
 
-        delegate: DankBarWindow {
+        delegate: TopBarWindow {
             rootWindow: root
             barConfig: root.barConfig
             leftWidgetsModel: root.leftWidgetsModel

@@ -11,10 +11,10 @@ Singleton {
     id: root
 
     property var widgetRegistry: ({})
-    property var dankBarRepeater: null
+    property var topBarRepeater: null
 
-    // Bars rendered inside the frame surface (connected mode) have no DankBarWindow in the
-    // repeater, so they self-register here (screenName -> barId -> DankBarBody) for trigger routing.
+    // Bars rendered inside the frame surface (connected mode) have no TopBarWindow in the
+    // repeater, so they self-register here (screenName -> barId -> TopBarBody) for trigger routing.
     property var frameHostedBars: ({})
 
     // Shared dock context-menu windows (created in DMSShell) so a frame-hosted dock can reach them.
@@ -55,24 +55,24 @@ Singleton {
         return Object.keys(bars).sort((a, b) => (vertical(a) - vertical(b)) || (order.indexOf(a) - order.indexOf(b))).map(barId => bars[barId]);
     }
 
-    // DankBar items self-register here (barConfig id -> DankBar) so frame-hosted bars can
+    // TopBar items self-register here (barConfig id -> TopBar) so frame-hosted bars can
     // resolve their models/rootWindow reactively, independent of repeater load ordering.
-    property var dankBarItems: ({})
+    property var topBarItems: ({})
 
-    function registerDankBarItem(barId, item) {
+    function registerTopBarItem(barId, item) {
         if (!barId || !item)
             return;
-        const next = Object.assign({}, dankBarItems);
+        const next = Object.assign({}, topBarItems);
         next[barId] = item;
-        dankBarItems = next;
+        topBarItems = next;
     }
 
-    function unregisterDankBarItem(barId, item) {
-        if (!barId || dankBarItems[barId] !== item)
+    function unregisterTopBarItem(barId, item) {
+        if (!barId || topBarItems[barId] !== item)
             return;
-        const next = Object.assign({}, dankBarItems);
+        const next = Object.assign({}, topBarItems);
         delete next[barId];
-        dankBarItems = next;
+        topBarItems = next;
     }
 
     signal widgetRegistered(string widgetId, string screenName)
@@ -210,11 +210,11 @@ Singleton {
         if (hosted.length > 0)
             return hosted[0];
 
-        if (!dankBarRepeater)
+        if (!topBarRepeater)
             return null;
 
-        for (var i = 0; i < dankBarRepeater.count; i++) {
-            const loader = dankBarRepeater.itemAt(i);
+        for (var i = 0; i < topBarRepeater.count; i++) {
+            const loader = topBarRepeater.itemAt(i);
             if (!loader?.item)
                 continue;
 
@@ -239,9 +239,9 @@ Singleton {
     }
 
     function getFirstBarWindow() {
-        if (dankBarRepeater) {
-            for (var i = 0; i < dankBarRepeater.count; i++) {
-                const barItem = dankBarRepeater.itemAt(i)?.item;
+        if (topBarRepeater) {
+            for (var i = 0; i < topBarRepeater.count; i++) {
+                const barItem = topBarRepeater.itemAt(i)?.item;
                 if (barItem?.barVariants?.instances?.length > 0)
                     return barItem.barVariants.instances[0];
             }

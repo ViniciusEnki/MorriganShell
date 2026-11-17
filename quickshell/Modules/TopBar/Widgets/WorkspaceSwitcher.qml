@@ -93,6 +93,33 @@ Item {
             root._placeholderPool = [];
             root._hyprSlotPool = {};
         }
+        function onIsHyprlandChanged() {
+            if (CompositorService.isHyprland) {
+                root.reconcileHyprlandSlots();
+            }
+        }
+    }
+
+    Connections {
+        target: SettingsData
+        function onWorkspacePaddingCountChanged() {
+            if (CompositorService.isHyprland)
+                root.reconcileHyprlandSlots();
+            else
+                root._reconciledPlaceholderList = root.reconcilePlaceholderPool(root.getBaseWorkspaceList());
+        }
+        function onShowWorkspacePaddingChanged() {
+            if (CompositorService.isHyprland)
+                root.reconcileHyprlandSlots();
+            else
+                root._reconciledPlaceholderList = root.reconcilePlaceholderPool(root.getBaseWorkspaceList());
+        }
+        function onWorkspacePreservePositionsChanged() {
+            if (CompositorService.isHyprland)
+                root.reconcileHyprlandSlots();
+            else
+                root._reconciledPlaceholderList = root.reconcilePlaceholderPool(root.getBaseWorkspaceList());
+        }
     }
 
     property var currentWorkspace: {
@@ -123,37 +150,48 @@ Item {
         }
         return [];
     }
-    property var workspaceList: {
+
+    // Cap the effective workspace padding count to the configured range (2-10)
+    // to prevent computational issues with extremely large values.
+    readonly property int effectiveWorkspacePaddingCount: Math.min(Math.max(SettingsData.workspacePaddingCount, 2), 10)
+
+    // New settings for workspace switcher behavior
+    readonly property bool workspaceUniformSize: SettingsData.workspaceUniformSize
+    readonly property bool workspacePreservePositions: SettingsData.workspacePreservePositions
+
+    function getBaseWorkspaceList() {
         if (useAqueous) {
-            const baseList = AqueousService.workspacesForOutput(effectiveScreenName).filter(ws => !SettingsData.showOccupiedWorkspacesOnly || ws.active || AqueousService.toplevels.some(w => w.aqueousWorkspaceId === ws.id));
-            return SettingsData.showWorkspacePadding && baseList.length ? padWorkspaces(baseList) : baseList;
+            return AqueousService.workspacesForOutput(effectiveScreenName).filter(ws => !SettingsData.showOccupiedWorkspacesOnly || ws.active || AqueousService.toplevels.some(w => w.aqueousWorkspaceId === ws.id));
         }
         if (useExtWorkspace) {
-            const baseList = getExtWorkspaceWorkspaces();
-            return SettingsData.showWorkspacePadding ? padWorkspaces(baseList) : baseList;
+            return getExtWorkspaceWorkspaces();
         }
-
-        let baseList;
         switch (CompositorService.compositor) {
         case "niri":
-            baseList = getNiriWorkspaces();
-            break;
+            return getNiriWorkspaces();
         case "hyprland":
-            return hyprlandSlotList(getHyprlandWorkspaces());
+            return getHyprlandWorkspaces();
         case "mango":
             if (root.mangoOverviewActive)
                 return [];
-            baseList = getDwlTags();
-            break;
+            return getDwlTags();
         case "sway":
         case "scroll":
         case "miracle":
-            baseList = getSwayWorkspaces();
-            break;
+            return getSwayWorkspaces();
         default:
             return [1];
         }
-        return SettingsData.showWorkspacePadding ? padWorkspaces(baseList) : baseList;
+    }
+
+    property var workspaceList: {
+        if (CompositorService.isHyprland) {
+            return _hyprlandReconciledList;
+        }
+        if (SettingsData.showWorkspacePadding) {
+            return _reconciledPlaceholderList;
+        }
+        return getBaseWorkspaceList();
     }
 
     function getSwayWorkspaces() {
@@ -289,11 +327,12 @@ Item {
 
         const hyprlandToplevels = Array.from(Hyprland.toplevels?.values || []);
         const activeWsId = root.currentWorkspace;
-        return filtered.filter(ws => {
+        const result = filtered.filter(ws => {
             if (ws.id === activeWsId)
                 return true;
             return hyprlandToplevels.some(tl => tl.workspace?.id === ws.id);
         });
+        return result;
     }
 
     function getHyprlandActiveWorkspace() {
@@ -424,35 +463,46 @@ Item {
         return Object.values(byApp);
     }
 
-    function _makePlaceholder() {
+    function _makePlaceholder(target) {
         if (useAqueous || useExtWorkspace)
             return {
                 "id": "",
                 "name": "",
                 "active": false,
-                "_placeholder": true
+                "_placeholder": true,
+                "_placeholderTarget": target
             };
         if (CompositorService.isNiri)
             return {
                 "id": -1,
                 "idx": -1,
-                "name": ""
+                "name": "",
+                "_placeholder": true,
+                "_placeholderTarget": target
             };
         if (CompositorService.isHyprland)
             return {
                 "id": -1,
-                "name": ""
+                "name": "",
+                "_placeholder": true,
+                "_placeholderTarget": target
             };
         if (root.isMango)
             return {
-                "tag": -1
+                "tag": -1,
+                "_placeholder": true,
+                "_placeholderTarget": target
             };
         if (CompositorService.isSway || CompositorService.isScroll || CompositorService.isMiracle)
             return {
                 "num": -1,
-                "_placeholder": true
+                "_placeholder": true,
+                "_placeholderTarget": target
             };
-        return -1;
+        return {
+            "_placeholder": true,
+            "_placeholderTarget": target
+        };
     }
 
     // Hyprland creates/destroys workspaces on empty enter/leave; slots keyed by id keep delegate identity so pills animate instead of popping
@@ -463,6 +513,7 @@ Item {
 
         QtObject {
             property var ws: null
+            property var _placeholderTarget: undefined
             readonly property var id: ws ? ws.id : -1
             readonly property string name: ws?.name ?? ""
             readonly property bool urgent: ws?.urgent ?? false
@@ -475,35 +526,121 @@ Item {
             slot = hyprSlotComponent.createObject(root);
             _hyprSlotPool[key] = slot;
         }
-        if (slot.ws !== ws)
-            slot.ws = ws;
+        // Update ws directly; reconciliation runs outside workspaceList evaluation
+        slot.ws = ws;
         return slot;
     }
 
     function hyprlandSlotList(raw) {
-        const slots = raw.map(ws => _hyprSlot(ws.id > 0 ? ws.id : "name:" + (ws.name ?? ""), ws));
-        if (!SettingsData.showWorkspacePadding)
+        if (!SettingsData.showWorkspacePadding) {
+            return raw.map(ws => _hyprSlot(ws.id > 0 ? ws.id : "name:" + (ws.name ?? ""), ws));
+        }
+
+        if (root.workspacePreservePositions) {
+            // Preserve positions: place workspaces at their correct positions, fill gaps with placeholders
+            const maxId = raw.reduce((max, ws) => Math.max(max, ws.id ?? 0), 0);
+            const totalSlots = Math.max(root.effectiveWorkspacePaddingCount, maxId);
+            const result = [];
+            for (let i = 0; i < totalSlots; i++) {
+                const ws = raw.find(ws => ws.id === i + 1);
+                if (ws) {
+                    const slot = _hyprSlot(ws.id > 0 ? ws.id : "name:" + (ws.name ?? ""), ws);
+                    slot._placeholderTarget = undefined;
+                    result.push(slot);
+                } else {
+                    const slot = _hyprSlot(i + 1, null);
+                    slot._placeholderTarget = i + 1;
+                    result.push(slot);
+                }
+            }
+            return result;
+        } else {
+            // Compact mode: pad at the end
+            const slots = raw.map(ws => _hyprSlot(ws.id > 0 ? ws.id : "name:" + (ws.name ?? ""), ws));
+            let nextId = raw.reduce((max, ws) => Math.max(max, ws.id ?? 0), 0);
+            while (slots.length < root.effectiveWorkspacePaddingCount) {
+                const slot = _hyprSlot(++nextId, null);
+                slot._placeholderTarget = nextId;
+                slots.push(slot);
+            }
             return slots;
-        // pad past the highest real id so a placeholder becomes that workspace's slot once created
-        let nextId = raw.reduce((max, ws) => Math.max(max, ws.id ?? 0), 0);
-        while (slots.length < 3)
-            slots.push(_hyprSlot(++nextId, null));
-        return slots;
+        }
+    }
+
+    // Reconciled Hyprland slot list, updated by reconcileHyprlandSlots()
+    property var _hyprlandReconciledList: []
+
+    function reconcileHyprlandSlots() {
+        if (!CompositorService.isHyprland)
+            return;
+        const raw = getHyprlandWorkspaces();
+        _hyprlandReconciledList = hyprlandSlotList(raw);
     }
 
     // Stable placeholder instances so ScriptModel (identity-diffed) reuses padding delegates instead of recreating them on workspace churn
     property var _placeholderPool: []
+    property var _reconciledPlaceholderList: []
+
+    function reconcilePlaceholderPool(list) {
+        if (!SettingsData.showWorkspacePadding)
+            return list;
+
+        const result = [];
+        if (!root.workspacePreservePositions) {
+            // Compact mode: add placeholders at the end
+            const padded = list.slice();
+            let slot = 0;
+            let maxExisting = 0;
+            for (const ws of list) {
+                const pos = getWorkspacePosition(ws);
+                if (pos > maxExisting) maxExisting = pos;
+            }
+            let nextTarget = maxExisting + 1;
+            while (padded.length < root.effectiveWorkspacePaddingCount) {
+                if (root._placeholderPool.length <= slot)
+                    root._placeholderPool.push(root._makePlaceholder(nextTarget));
+                root._placeholderPool[slot]._placeholderTarget = nextTarget;
+                padded.push(root._placeholderPool[slot]);
+                slot++;
+                nextTarget++;
+            }
+            return padded;
+        }
+
+        // Preserve positions mode: place workspaces at their correct positions
+        let maxPos = 0;
+        for (const ws of list) {
+            const pos = getWorkspacePosition(ws);
+            if (pos > maxPos) maxPos = pos;
+        }
+        const totalSlots = Math.max(root.effectiveWorkspacePaddingCount, maxPos);
+        for (let i = 0; i < totalSlots; i++) {
+            const ws = list.find(ws => getWorkspacePosition(ws) === i + 1);
+            if (ws) {
+                result.push(ws);
+            } else {
+                if (root._placeholderPool.length <= i)
+                    root._placeholderPool.push(root._makePlaceholder(i + 1));
+                root._placeholderPool[i]._placeholderTarget = i + 1;
+                result.push(root._placeholderPool[i]);
+            }
+        }
+        return result;
+    }
 
     function padWorkspaces(list) {
-        const padded = list.slice();
-        let slot = 0;
-        while (padded.length < 3) {
-            if (root._placeholderPool.length <= slot)
-                root._placeholderPool.push(root._makePlaceholder());
-            padded.push(root._placeholderPool[slot]);
-            slot++;
-        }
-        return padded;
+        // Return pre-reconciled list if available, otherwise compute (fallback for initial eval)
+        return _reconciledPlaceholderList.length > 0 ? _reconciledPlaceholderList : reconcilePlaceholderPool(list);
+    }
+
+    function getWorkspacePosition(ws) {
+        if (root.useAqueous) return ws?.number ?? 0;
+        if (root.useExtWorkspace) return parseInt(ws?.id ?? ws?.name ?? "0") || 0;
+        if (CompositorService.isNiri) return (ws?.idx ?? -1) + 1;
+        if (CompositorService.isHyprland) return ws?.id ?? 0;
+        if (root.isMango) return ws?.tag ?? 0;
+        if (CompositorService.isSway || CompositorService.isScroll || CompositorService.isMiracle) return ws?.num ?? 0;
+        return 0;
     }
 
     function getNiriWorkspaces() {
@@ -664,8 +801,29 @@ Item {
     }
 
     function switchToWorkspaceByModelData(data) {
-        if (!data || data._placeholder)
+        if (!data)
             return;
+
+        // Detect placeholder across compositors and navigate to target if available
+        const isPlaceholder = (root.useAqueous || root.useExtWorkspace)
+            ? data._placeholder === true
+            : CompositorService.isNiri
+                ? data.idx === -1
+                : CompositorService.isHyprland
+                    ? data.id === -1
+                    : root.isMango
+                        ? data.tag === -1
+                        : (CompositorService.isSway || CompositorService.isScroll || CompositorService.isMiracle)
+                            ? data._placeholder === true
+                            : data === -1;
+
+        if (isPlaceholder) {
+            const target = data._placeholderTarget;
+            if (target !== undefined && target > 0) {
+                switchToPlaceholder(target);
+            }
+            return;
+        }
 
         if (useAqueous) {
             AqueousService.activateWorkspace(data);
@@ -700,6 +858,40 @@ Item {
         }
     }
 
+    function switchToPlaceholder(target) {
+        if (!target || target < 1)
+            return;
+
+        if (useAqueous) {
+            // Aqueous: activate workspace by number
+            const ws = { id: target, number: target, active: false };
+            AqueousService.activateWorkspace(ws);
+            return;
+        }
+
+        if (root.useExtWorkspace) {
+            // Ext workspace: not applicable for placeholders
+            return;
+        }
+
+        switch (CompositorService.compositor) {
+        case "niri":
+            NiriService.switchToWorkspace(target);
+            break;
+        case "hyprland":
+            HyprlandService.focusWorkspace(target);
+            break;
+        case "mango":
+            MangoService.switchToTag(root.screenName, target - 1);
+            break;
+        case "sway":
+        case "scroll":
+        case "miracle":
+            CompositorService.dispatchSwayWorkspace(target);
+            break;
+        }
+    }
+
     function findClosestWorkspaceIndex(localX, localY) {
         if (workspaceRepeater.count === 0)
             return -1;
@@ -709,7 +901,10 @@ Item {
 
         for (let i = 0; i < workspaceRepeater.count; i++) {
             const item = workspaceRepeater.itemAt(i);
-            if (!item || item.isPlaceholder)
+            if (!item)
+                continue;
+            // Placeholders com _placeholderTarget definido são destinos válidos de navegação
+            if (item.isPlaceholder && !item.modelData?._placeholderTarget)
                 continue;
             const center = item.mapToItem(root, item.width / 2, item.height / 2);
             const dist = isVertical ? Math.abs(localY - center.y) : Math.abs(localX - center.x);
@@ -1157,14 +1352,19 @@ Item {
                         return modelData === root.currentWorkspace;
                     if (CompositorService.isNiri)
                         return !!(modelData && modelData.idx === root.currentWorkspace);
-                    if (CompositorService.isHyprland)
-                        return !!(modelData && modelData.id === root.currentWorkspace);
+                    if (CompositorService.isHyprland) {
+                        const wsId = modelData?.id;
+                        const isPlaceholder = wsId === -1 && modelData._placeholderTarget !== undefined;
+                        const targetId = isPlaceholder ? modelData._placeholderTarget : wsId;
+                        return !!(modelData && targetId === root.currentWorkspace);
+                    }
                     if (root.isMango)
                         return !!(modelData && root.dwlActiveTags.includes(modelData.tag));
                     if (CompositorService.isSway || CompositorService.isScroll || CompositorService.isMiracle)
                         return !!(modelData && root.swayWorkspaceKey(modelData) === root.currentWorkspace);
                     return modelData === root.currentWorkspace;
                 }
+                readonly property bool isDotsStyle: SettingsData.workspaceSwitcherStyle === "dots"
                 property bool isOccupied: {
                     if (root.useAqueous)
                         return AqueousService.toplevels.some(w => w.aqueousWorkspaceId === modelData?.id);
@@ -1280,8 +1480,8 @@ Item {
                     return (SettingsData.groupWorkspaceApps && (!isActive || SettingsData.groupActiveWorkspaceApps)) ? groupedCount : totalCount;
                 }
 
-                readonly property real baseWidth: root.isVertical ? (SettingsData.showWorkspaceApps ? Math.max(widgetHeight * 0.7, root.appIconSize + Theme.spacingXS * 2) : widgetHeight * 0.5) : (isActive ? Math.max(root.widgetHeight * 1.05, root.appIconSize * 1.6) : Math.max(root.widgetHeight * 0.7, root.appIconSize * 1.2))
-                readonly property real baseHeight: root.isVertical ? (isActive ? Math.max(root.widgetHeight * 1.05, root.appIconSize * 1.6) : Math.max(root.widgetHeight * 0.7, root.appIconSize * 1.2)) : (SettingsData.showWorkspaceApps ? Math.max(widgetHeight * 0.7, root.appIconSize + Theme.spacingXS * 2) : widgetHeight * 0.5)
+                readonly property real baseWidth: delegateRoot.isDotsStyle ? (root.workspaceUniformSize ? widgetHeight * 0.45 : (isActive ? widgetHeight * 0.7 : widgetHeight * 0.45)) : (root.isVertical ? (SettingsData.showWorkspaceApps ? Math.max(widgetHeight * 0.7, root.appIconSize + Theme.spacingXS * 2) : widgetHeight * 0.5) : (root.workspaceUniformSize ? Math.max(root.widgetHeight * 0.7, root.appIconSize * 1.2) : (isActive ? Math.max(root.widgetHeight * 1.05, root.appIconSize * 1.6) : Math.max(root.widgetHeight * 0.7, root.appIconSize * 1.2))))
+                readonly property real baseHeight: delegateRoot.isDotsStyle ? (root.workspaceUniformSize ? widgetHeight * 0.45 : (isActive ? widgetHeight * 0.7 : widgetHeight * 0.45)) : (root.isVertical ? (root.workspaceUniformSize ? Math.max(root.widgetHeight * 0.7, root.appIconSize * 1.2) : (isActive ? Math.max(root.widgetHeight * 1.05, root.appIconSize * 1.6) : Math.max(root.widgetHeight * 0.7, root.appIconSize * 1.2))) : (SettingsData.showWorkspaceApps ? Math.max(widgetHeight * 0.7, root.appIconSize + Theme.spacingXS * 2) : widgetHeight * 0.5))
                 readonly property bool hasWorkspaceName: SettingsData.showWorkspaceName && modelData?.name && modelData.name !== ""
                 readonly property bool workspaceNamesEnabled: SettingsData.showWorkspaceName && (root.useAqueous || CompositorService.isNiri || CompositorService.isSway || CompositorService.isScroll || CompositorService.isMiracle)
                 readonly property real contentImplicitWidth: appIconsLoader.item?.contentWidth ?? 0
@@ -1424,10 +1624,12 @@ Item {
                 MouseArea {
                     id: mouseArea
                     anchors.fill: parent
-                    hoverEnabled: !isPlaceholder
-                    cursorShape: isPlaceholder ? Qt.ArrowCursor : (dragHandler.dragging ? Qt.ClosedHandCursor : Qt.PointingHandCursor)
-                    enabled: !isPlaceholder
+                    readonly property bool clickablePlaceholder: isPlaceholder && modelData?._placeholderTarget !== undefined
+                    hoverEnabled: !isPlaceholder || clickablePlaceholder
+                    cursorShape: isPlaceholder && !clickablePlaceholder ? Qt.ArrowCursor : (dragHandler.dragging ? Qt.ClosedHandCursor : Qt.PointingHandCursor)
+                    enabled: !isPlaceholder || clickablePlaceholder
                     acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    propagateComposedEvents: false
 
                     property bool mousePressed: false
 
@@ -1491,12 +1693,17 @@ Item {
                         root.dragSourceIndex = -1;
                         root.dragTargetIndex = -1;
 
-                        if (wasDragging || isPlaceholder)
+                        if (wasDragging || (isPlaceholder && !clickablePlaceholder))
                             return;
 
                         if (mouse.button === Qt.LeftButton) {
                             if (delegateRoot.focusWindowAt(mouse.x, mouse.y))
                                 return;
+                            // Placeholders com _placeholderTarget válido navegam pelo destino numérico
+                            if (isPlaceholder && clickablePlaceholder) {
+                                root.switchToWorkspaceByModelData(modelData);
+                                return;
+                            }
                             if (root.useAqueous) {
                                 root.switchToWorkspaceByModelData(modelData);
                             } else if (root.useExtWorkspace) {
@@ -1629,13 +1836,15 @@ Item {
                     y: root.isVertical ? (parent.height - height) / 2 : (root.widgetHeight - height) / 2
                     width: {
                         const borderWidth = (delegateRoot.focusedBorderEnabledForMonitor && isActive && !isPlaceholder) ? delegateRoot.focusedBorderThicknessForMonitor : 0;
-                        return delegateRoot.visualWidth + borderWidth * 2;
+                        const baseWidth = delegateRoot.isDotsStyle ? (root.workspaceUniformSize ? widgetHeight * 0.45 : (isActive ? root.widgetHeight * 0.7 : root.widgetHeight * 0.45)) : delegateRoot.visualWidth;
+                        return baseWidth + borderWidth * 2;
                     }
                     height: {
                         const borderWidth = (delegateRoot.focusedBorderEnabledForMonitor && isActive && !isPlaceholder) ? delegateRoot.focusedBorderThicknessForMonitor : 0;
-                        return delegateRoot.visualHeight + borderWidth * 2;
+                        const baseHeight = delegateRoot.isDotsStyle ? (root.workspaceUniformSize ? widgetHeight * 0.45 : (isActive ? root.widgetHeight * 0.7 : root.widgetHeight * 0.45)) : delegateRoot.visualHeight;
+                        return baseHeight + borderWidth * 2;
                     }
-                    radius: Theme.cornerRadius
+                    radius: delegateRoot.isDotsStyle ? width / 2 : Theme.cornerRadius
                     color: "transparent"
                     border.width: (delegateRoot.focusedBorderEnabledForMonitor && isActive && !isPlaceholder) ? delegateRoot.focusedBorderThicknessForMonitor : 0
                     border.color: (delegateRoot.focusedBorderEnabledForMonitor && isActive && !isPlaceholder) ? focusedBorderColor : Theme.withAlpha(focusedBorderColor, 0)
@@ -1671,16 +1880,16 @@ Item {
 
                 Rectangle {
                     id: visualContent
-                    width: delegateRoot.visualWidth
-                    height: delegateRoot.visualHeight
+                    width: delegateRoot.isDotsStyle ? (root.workspaceUniformSize ? root.widgetHeight * 0.45 : (isActive ? root.widgetHeight * 0.7 : root.widgetHeight * 0.45)) : delegateRoot.visualWidth
+                    height: delegateRoot.isDotsStyle ? (root.workspaceUniformSize ? root.widgetHeight * 0.45 : (isActive ? root.widgetHeight * 0.7 : root.widgetHeight * 0.45)) : delegateRoot.visualHeight
                     x: root.isVertical ? (root.widgetHeight - width) / 2 : (parent.width - width) / 2
                     y: root.isVertical ? (parent.height - height) / 2 : (root.widgetHeight - height) / 2
-                    radius: Theme.cornerRadius
+                    radius: delegateRoot.isDotsStyle ? width / 2 : Theme.cornerRadius
                     color: delegateRoot.displayColor
                     opacity: dragHandler.dragging ? 0.8 : 1.0
 
-                    border.width: dragHandler.dragging ? 2 : (isUrgent ? 2 : (isDropTarget ? 2 : 0))
-                    border.color: dragHandler.dragging ? Theme.primary : (isUrgent ? urgentColor : (isDropTarget ? Theme.primary : Theme.withAlpha(Theme.primary, 0)))
+                    border.width: delegateRoot.isDotsStyle ? 0 : (dragHandler.dragging ? 2 : (isUrgent ? 2 : (isDropTarget ? 2 : 0)))
+                    border.color: delegateRoot.isDotsStyle ? "transparent" : (dragHandler.dragging ? Theme.primary : (isUrgent ? urgentColor : (isDropTarget ? Theme.primary : Theme.withAlpha(Theme.primary, 0))))
 
                     transform: Translate {
                         x: root.isVertical ? 0 : (dragHandler.dragging ? dragHandler.dragAxisOffset : 0)
@@ -2083,86 +2292,97 @@ Item {
                 Connections {
                     target: CompositorService
                     function onSortedToplevelsChanged() {
-                        delegateRoot.updateAllData();
+                        updateAllData();
                     }
                 }
                 Connections {
                     target: root
                     function onCurrentWorkspaceChanged() {
-                        delegateRoot.updateAllData();
+                        updateAllData();
                     }
                 }
                 Connections {
                     target: NiriService
                     enabled: CompositorService.isNiri
                     function onAllWorkspacesChanged() {
-                        delegateRoot.updateAllData();
+                        updateAllData();
                     }
                     function onWindowUrgentChanged() {
-                        delegateRoot.updateAllData();
+                        updateAllData();
                     }
                     function onWindowsChanged() {
-                        delegateRoot.updateAllData();
+                        updateAllData();
                     }
                 }
                 Connections {
                     target: SettingsData
                     function onShowWorkspaceAppsChanged() {
-                        delegateRoot.updateAllData();
+                        updateAllData();
                     }
                     function onWorkspaceNameIconsChanged() {
-                        delegateRoot.updateAllData();
+                        updateAllData();
                     }
                     function onAppIdSubstitutionsChanged() {
-                        delegateRoot.updateAllData();
+                        updateAllData();
                     }
                     function onGroupWorkspaceAppsChanged() {
-                        delegateRoot.updateAllData();
+                        updateAllData();
                     }
                     function onGroupActiveWorkspaceAppsChanged() {
-                        delegateRoot.updateAllData();
+                        updateAllData();
                     }
                 }
                 Connections {
                     target: MangoService
                     enabled: root.isMango
                     function onStateChanged() {
-                        delegateRoot.updateAllData();
+                        root._reconciledPlaceholderList = root.reconcilePlaceholderPool(root.getBaseWorkspaceList());
+                    }
+                }
+                Connections {
+                    target: NiriService
+                    enabled: CompositorService.isNiri
+                    function onAllWorkspacesChanged() {
+                        root._reconciledPlaceholderList = root.reconcilePlaceholderPool(root.getBaseWorkspaceList());
                     }
                 }
                 Connections {
                     target: Hyprland.workspaces
                     enabled: CompositorService.isHyprland
                     function onValuesChanged() {
-                        delegateRoot.updateAllData();
+                        root.reconcileHyprlandSlots();
                     }
                 }
                 Connections {
                     target: CompositorService.isHyprland ? Hyprland : null
                     enabled: CompositorService.isHyprland
                     function onRawEvent(event) {
-                        if (event.name === "activewindow" || event.name === "activewindowv2")
-                            delegateRoot.updateAllData();
+                        if (event.name === "activewindow" || event.name === "activewindowv2" ||
+                            event.name === "workspace" || event.name === "workspacev2") {
+                            root.reconcileHyprlandSlots();
+                        }
                     }
                 }
                 Connections {
                     target: I3.workspaces
                     enabled: (CompositorService.isSway || CompositorService.isScroll || CompositorService.isMiracle)
                     function onValuesChanged() {
-                        delegateRoot.updateAllData();
+                        root._reconciledPlaceholderList = root.reconcilePlaceholderPool(root.getBaseWorkspaceList());
                     }
                 }
                 Connections {
                     target: AqueousService
                     function onStateChanged() {
-                        if (root.useAqueous)
-                            delegateRoot.updateAllData();
+                        if (root.useAqueous) {
+                            root._reconciledPlaceholderList = root.reconcilePlaceholderPool(root.getBaseWorkspaceList());
+                        }
                     }
                 }
                 property var _extWindowsetsTrigger: root.useExtWorkspace ? WindowManager.windowsets : null
                 on_ExtWindowsetsTriggerChanged: {
-                    if (root.useExtWorkspace)
-                        delegateRoot.updateAllData();
+                    if (root.useExtWorkspace) {
+                        root._reconciledPlaceholderList = root.reconcilePlaceholderPool(root.getBaseWorkspaceList());
+                    }
                 }
             }
         }
@@ -2170,6 +2390,10 @@ Item {
 
     Component.onCompleted: {
         _updateBlurRegistration();
+        if (CompositorService.isHyprland)
+            reconcileHyprlandSlots();
+        else
+            _reconciledPlaceholderList = reconcilePlaceholderPool(getBaseWorkspaceList());
     }
 
     property bool _blurRegistered: false

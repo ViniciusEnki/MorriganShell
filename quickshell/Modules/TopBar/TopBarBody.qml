@@ -5,7 +5,7 @@ import qs.Services
 
 Item {
     id: barWindow
-    readonly property var log: Log.scoped("DankBarBody")
+    readonly property var log: Log.scoped("TopBarBody")
 
     required property var hostWindow
     required property var rootWindow
@@ -728,11 +728,11 @@ Item {
     Connections {
         target: PluginService
         function onPluginLoaded(pluginId) {
-            log.info("DankBar: Plugin loaded:", pluginId);
+            log.info("TopBar: Plugin loaded:", pluginId);
             SettingsData.widgetDataChanged();
         }
         function onPluginUnloaded(pluginId) {
-            log.info("DankBar: Plugin unloaded:", pluginId);
+            log.info("TopBar: Plugin unloaded:", pluginId);
             SettingsData.widgetDataChanged();
         }
     }
@@ -1154,7 +1154,7 @@ Item {
                         onWorkspaceSwitchRequested: direction => topBarContent.switchWorkspace(direction)
                     }
 
-                    DankBarContent {
+                    TopBarContent {
                         id: topBarContent
                         barWindow: barWindow
                         rootWindow: barWindow.rootWindow

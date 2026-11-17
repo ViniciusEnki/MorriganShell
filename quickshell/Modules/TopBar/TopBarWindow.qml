@@ -6,7 +6,7 @@ import qs.Services
 
 PanelWindow {
     id: barWindow
-    readonly property var log: Log.scoped("DankBarWindow")
+    readonly property var log: Log.scoped("TopBarWindow")
 
     required property var rootWindow
     required property var barConfig
@@ -134,7 +134,7 @@ PanelWindow {
         }
     }
 
-    DankBarBody {
+    TopBarBody {
         id: body
         anchors.fill: parent
         hostWindow: barWindow

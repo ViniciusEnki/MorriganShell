@@ -4,7 +4,7 @@ import Quickshell.I3
 import Quickshell.Services.SystemTray
 import Quickshell.Wayland
 import qs.Common
-import qs.Modules.DankBar.Widgets
+import qs.Modules.TopBar.Widgets
 import qs.Services
 
 Item {
@@ -438,7 +438,7 @@ Item {
         return "left";
     }
 
-    DankBarHoverController {
+    TopBarHoverController {
         id: hoverController
         barContent: topBarContent
         barWindow: topBarContent.barWindow

@@ -5,7 +5,7 @@ import Quickshell
 import Quickshell.Wayland
 import qs.Common
 import qs.Modals.DankLauncherV2 as DankLauncher
-import qs.Modules.DankBar
+import qs.Modules.TopBar
 import qs.Services
 import qs.Widgets
 

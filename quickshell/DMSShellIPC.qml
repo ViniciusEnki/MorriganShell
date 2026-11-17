@@ -19,7 +19,7 @@ Item {
     required property var dankDashPopoutLoader
     required property var notepadSlideoutVariants
     required property var hyprKeybindsModalLoader
-    required property var dankBarRepeater
+    required property var topBarRepeater
     required property var hyprlandOverviewLoader
     required property var workspaceRenameModalLoader
     required property var windowRuleModalLoader
@@ -28,9 +28,9 @@ Item {
         const focusedScreenName = BarWidgetService.getFocusedScreenName();
 
         const bars = [];
-        if (root.dankBarRepeater) {
-            for (let i = 0; i < root.dankBarRepeater.count; i++)
-                bars.push(...(root.dankBarRepeater.itemAt(i)?.item?.barVariants?.instances || []));
+        if (root.topBarRepeater) {
+            for (let i = 0; i < root.topBarRepeater.count; i++)
+                bars.push(...(root.topBarRepeater.itemAt(i)?.item?.barVariants?.instances || []));
         }
         for (const screenName in BarWidgetService.frameHostedBars)
             bars.push(...BarWidgetService.frameBarsForScreen(screenName));

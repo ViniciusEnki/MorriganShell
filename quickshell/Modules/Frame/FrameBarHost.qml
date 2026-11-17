@@ -2,11 +2,11 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import qs.Common
-import qs.Modules.DankBar
+import qs.Modules.TopBar
 import qs.Services
 
-// Renders the bar(s) inside the frame surface in connected mode: one DankBarBody per
-// active bar edge, positioned in the frame's cutout band. Reuses the existing DankBar
+// Renders the bar(s) inside the frame surface in connected mode: one TopBarBody per
+// active bar edge, positioned in the frame's cutout band. Reuses the existing TopBar
 // item (per bar config) as rootWindow so colour-picker, overview loader and widget
 // models are shared with the standalone path.
 Item {
@@ -43,8 +43,8 @@ Item {
 
             readonly property string edge: modelData.edge
             readonly property string barId: modelData.barId
-            readonly property var dankBarItem: BarWidgetService.dankBarItems[modelData.barId] ?? null
-            readonly property var slotBarConfig: dankBarItem?.barConfig ?? SettingsData.getBarConfig(modelData.barId)
+            readonly property var topBarItem: BarWidgetService.topBarItems[modelData.barId] ?? null
+            readonly property var slotBarConfig: topBarItem?.barConfig ?? SettingsData.getBarConfig(modelData.barId)
             readonly property int edgeInset: {
                 switch (edge) {
                 case "left":
@@ -60,7 +60,7 @@ Item {
             readonly property int rowThickness: Math.floor(edgeInset / Math.max(1, modelData.rowCount))
             readonly property int rowOffset: modelData.row * rowThickness
 
-            // Slots span the full edge like standalone windows; DankBarContent applies the adjacency insets itself.
+            // Slots span the full edge like standalone windows; TopBarContent applies the adjacency insets itself.
             x: {
                 switch (edge) {
                 case "left":
@@ -86,16 +86,16 @@ Item {
 
             Loader {
                 anchors.fill: parent
-                active: slot.dankBarItem !== null && slot.slotBarConfig !== null
+                active: slot.topBarItem !== null && slot.slotBarConfig !== null
 
-                sourceComponent: DankBarBody {
+                sourceComponent: TopBarBody {
                     hostWindow: host.frameWindow
                     modelData: host.targetScreen
-                    rootWindow: slot.dankBarItem
+                    rootWindow: slot.topBarItem
                     barConfig: slot.slotBarConfig
-                    leftWidgetsModel: slot.dankBarItem?.leftWidgetsModel ?? null
-                    centerWidgetsModel: slot.dankBarItem?.centerWidgetsModel ?? null
-                    rightWidgetsModel: slot.dankBarItem?.rightWidgetsModel ?? null
+                    leftWidgetsModel: slot.topBarItem?.leftWidgetsModel ?? null
+                    centerWidgetsModel: slot.topBarItem?.centerWidgetsModel ?? null
+                    rightWidgetsModel: slot.topBarItem?.rightWidgetsModel ?? null
 
                     Component.onCompleted: BarWidgetService.registerFrameBar(host.screenName, slot.barId, this)
                     Component.onDestruction: BarWidgetService.unregisterFrameBar(host.screenName, slot.barId, this)

@@ -281,7 +281,7 @@ Item {
 
                 StyledText {
                     width: parent.width
-                    text: I18n.tr("Choose the logo displayed on the launcher button in DankBar")
+                    text: I18n.tr("Choose the logo displayed on the launcher button in TopBar")
                     font.pixelSize: Theme.fontSizeSmall
                     color: Theme.surfaceVariantText
                     wrapMode: Text.WordWrap

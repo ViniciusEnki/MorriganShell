@@ -18,6 +18,7 @@ Singleton {
     property bool isUpdating: false
     property bool pendingUpdate: false
     readonly property bool dgopAvailable: DMSService.isConnected && DMSService.capabilities.includes("dgop")
+
     property bool sessionGpuIdsSeeded: false
 
     property var moduleRefCounts: ({})

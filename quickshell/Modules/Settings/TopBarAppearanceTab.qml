@@ -1,5 +1,5 @@
 import QtQuick
 
-DankBarTab {
+TopBarTab {
     appearanceOnly: true
 }
