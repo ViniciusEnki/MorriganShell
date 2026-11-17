@@ -564,6 +564,8 @@ Variants {
                 }
             }
 
+            
+
             Component.onDestruction: {
                 SessionData.clearMonitorScrollPosition(modelData.name);
             }
@@ -628,6 +630,8 @@ Variants {
                     root.contentReady = true;
                     return;
                 }
+                // Clear source first to force Image reload and avoid cache issues
+                currentWallpaper.source = "";
                 currentWallpaper.source = newSource;
             }
 
@@ -710,6 +714,8 @@ Variants {
                     break;
                 }
 
+                // Clear source first to force Image reload and avoid cache issues
+                nextWallpaper.source = "";
                 nextWallpaper.source = newPath;
 
                 if (nextWallpaper.status === Image.Ready)
@@ -782,7 +788,7 @@ Variants {
                 asynchronous: true
                 retainWhileLoading: true
                 smooth: true
-                cache: true
+                cache: false
 
                 sourceSize: Qt.size(root.textureWidth, root.textureHeight)
                 fillMode: Theme.getFillMode(SessionData.getMonitorWallpaperFillMode(modelData.name))
@@ -816,7 +822,7 @@ Variants {
                 asynchronous: true
                 retainWhileLoading: true
                 smooth: true
-                cache: true
+                cache: false
 
                 sourceSize: Qt.size(root.textureWidth, root.textureHeight)
                 fillMode: Theme.getFillMode(SessionData.getMonitorWallpaperFillMode(modelData.name))
@@ -887,9 +893,12 @@ Variants {
                 source: root.effectiveScrolling ? root.currentSource : ""
                 asynchronous: true
                 smooth: true
-                cache: true
+                cache: false
                 sourceSize: Qt.size(imageMetrics.canvasWidth, imageMetrics.canvasHeight)
                 fillMode: Image.Stretch
+
+                onStatusChanged: {
+                }
             }
 
             ShaderEffectSource {

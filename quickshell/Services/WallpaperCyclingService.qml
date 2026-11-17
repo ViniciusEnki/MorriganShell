@@ -135,7 +135,7 @@ Singleton {
     }
 
     function findCommand(wallpaperDir) {
-        return ["sh", "-c", `find -L "${wallpaperDir}" -maxdepth 1 -type f \\( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.bmp" -o -iname "*.gif" -o -iname "*.webp" -o -iname "*.jxl" -o -iname "*.avif" -o -iname "*.heif" -o -iname "*.exr" \\) 2>/dev/null | sort`];
+        return ["sh", "-c", 'find -L "$1" -type f \\( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.bmp" -o -iname "*.gif" -o -iname "*.webp" -o -iname "*.jxl" -o -iname "*.avif" -o -iname "*.heif" -o -iname "*.exr" \\) 2>/dev/null | sort', "find", wallpaperDir];
     }
 
     function monitorProcessFor(screenName) {
@@ -380,7 +380,8 @@ Singleton {
 
             try {
                 SessionData.setWallpaper(absolutePath);
-                SessionData.wallpaperCyclingFolderPath = "";
+                // Do NOT clear wallpaperCyclingFolderPath when setting wallpaper via IPC
+                // The cycling folder should persist for the gallery
                 SessionData.saveSettings();
                 return "SUCCESS: Wallpaper set to " + absolutePath;
             } catch (e) {
@@ -392,7 +393,7 @@ Singleton {
             SessionData.setWallpaper("");
             SessionData.setPerMonitorWallpaper(false);
             SessionData.monitorWallpapers = {};
-            SessionData.wallpaperCyclingFolderPath = "";
+            // Preserve wallpaperCyclingFolderPath for the gallery - only clear if explicitly requested
             SessionData.saveSettings();
             return "SUCCESS: All wallpapers cleared";
         }
@@ -454,7 +455,8 @@ Singleton {
                     SessionData.setPerMonitorWallpaper(true);
                 }
                 SessionData.setMonitorWallpaper(screenName, absolutePath);
-                SessionData.setMonitorCyclingFolderPath(screenName, "");
+                // Do NOT clear the cycling folder path when setting a wallpaper via IPC
+                // The cycling folder should persist for the gallery
                 return "SUCCESS: Wallpaper set for " + screenName + " to " + absolutePath;
             } catch (e) {
                 return "ERROR: Failed to set wallpaper for " + screenName + ": " + e.toString();

@@ -219,12 +219,13 @@ Item {
                                         onClicked: {
                                             if (SessionData.perMonitorWallpaper) {
                                                 SessionData.setMonitorWallpaper(selectedMonitorName, "");
-                                                SessionData.setMonitorCyclingFolderPath(selectedMonitorName, "");
+                                                // Do NOT clear the cycling folder path when clearing the wallpaper
+                                                // The configured cycling folder should persist for the gallery
                                             } else {
                                                 if (Theme.currentTheme === Theme.dynamic)
                                                     Theme.switchTheme("blue");
                                                 SessionData.clearWallpaper();
-                                                SessionData.wallpaperCyclingFolderPath = "";
+                                                // Do NOT clear wallpaperCyclingFolderPath - preserve the cycling folder for the gallery
                                                 SessionData.saveSettings();
                                             }
                                         }
@@ -1363,10 +1364,12 @@ Item {
             onFileSelected: path => {
                 if (SessionData.perMonitorWallpaper) {
                     SessionData.setMonitorWallpaper(selectedMonitorName, path);
-                    SessionData.setMonitorCyclingFolderPath(selectedMonitorName, "");
+                    // Do NOT clear the cycling folder path when selecting a specific wallpaper image
+                    // The cycling folder should only be cleared when explicitly choosing a new cycling folder
                 } else {
                     SessionData.setWallpaper(path);
-                    SessionData.wallpaperCyclingFolderPath = "";
+                    // Do NOT clear wallpaperCyclingFolderPath when selecting a specific wallpaper image
+                    // The cycling folder should only be cleared when explicitly choosing a new cycling folder
                     SessionData.saveSettings();
                 }
                 close();

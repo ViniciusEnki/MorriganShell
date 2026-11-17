@@ -3,6 +3,7 @@ import QtCore
 import QtQuick
 import Quickshell
 import Quickshell.Widgets
+import Quickshell.Io
 import qs.Common
 import qs.Modals.FileBrowser
 import qs.Widgets
@@ -41,6 +42,34 @@ Item {
     // Forces the page grid to rebuild when the folder model reorders in place.
     property int gridRevision: 0
     property int pagerCachePages: 1
+
+    // Recursive wallpaper model
+    property var recursiveWallpaperPaths: []
+    property bool recursiveModelLoading: false
+    property bool recursiveModelReady: false
+
+    // Process for recursive find
+    Process {
+        id: wallpaperFindProcess
+        property int currentGeneration: 0
+        running: false
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.onWallpaperFindFinished(text, wallpaperFindProcess.currentGeneration);
+            }
+        }
+        stderr: StdioCollector {
+            onStreamFinished: {
+                if (text && text.trim()) {
+                    console.warn("[WallpaperTab] find stderr:", { stderr: text.trim(), generation: wallpaperFindProcess.currentGeneration });
+                }
+            }
+        }
+        onExited: {
+            // Handled via onWallpaperFindFinished with empty output
+        }
+    }
 
     signal requestTabChange(int newIndex)
 
@@ -84,7 +113,22 @@ Item {
 
     function rebuildWallpaperList(preferCurrentWallpaper) {
         const paths = [];
-        if (wallpaperFolderModel.status === FolderListModel.Ready) {
+
+        // Use recursive model if ready, otherwise fall back to FolderListModel
+        if (recursiveModelReady) {
+            const terms = searchTerms();
+            for (let i = 0; i < recursiveWallpaperPaths.length; i++) {
+                const filePath = recursiveWallpaperPaths[i];
+                if (!filePath)
+                    continue;
+                if (terms.length > 0) {
+                    const fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
+                    if (!matchesTerms(terms, fileName, filePath))
+                        continue;
+                }
+                paths.push(filePath);
+            }
+        } else if (wallpaperFolderModel.status === FolderListModel.Ready) {
             const terms = searchTerms();
             const rowCount = wallpaperFolderModel.count;
             for (let i = 0; i < rowCount; i++) {
@@ -189,13 +233,38 @@ Item {
         return SessionData.wallpaperPath;
     }
 
+    function getWallpaperDirectory() {
+        // Use configured cycling folder path if set, regardless of whether cycling is enabled
+        // This allows the Dashboard gallery to show all images from the configured folder
+        if (SessionData.perMonitorWallpaper && targetScreenName) {
+            const monitorSettings = SessionData.getMonitorCyclingSettings(targetScreenName);
+            if (monitorSettings.folderPath) {
+                return monitorSettings.folderPath;
+            }
+            // Fall back to global cycling folder path if monitor-specific path is not configured
+            if (SessionData.wallpaperCyclingFolderPath) {
+                return SessionData.wallpaperCyclingFolderPath;
+            }
+        } else if (SessionData.wallpaperCyclingFolderPath) {
+            return SessionData.wallpaperCyclingFolderPath;
+        }
+
+        // Fallback: current wallpaper directory
+        const currentWallpaper = getCurrentWallpaper();
+        if (currentWallpaper && !currentWallpaper.startsWith("#")) {
+            return currentWallpaper.substring(0, currentWallpaper.lastIndexOf('/'));
+        }
+        return "";
+    }
+
     function setCurrentWallpaper(path) {
         if (SessionData.perMonitorWallpaper && targetScreenName) {
             SessionData.setMonitorWallpaper(targetScreenName, path);
-            SessionData.setMonitorCyclingFolderPath(targetScreenName, "");
+            // Do NOT clear the cycling folder path when selecting a specific wallpaper image
+            // The cycling folder should only be cleared when explicitly choosing a new cycling folder
         } else {
             SessionData.setWallpaper(path);
-            SessionData.wallpaperCyclingFolderPath = "";
+            // Do NOT clear wallpaperCyclingFolderPath when selecting a specific wallpaper image
             SessionData.saveSettings();
         }
     }
@@ -420,18 +489,93 @@ Item {
     }
 
     function loadWallpaperDirectory() {
-        const currentWallpaper = getCurrentWallpaper();
+        const dir = getWallpaperDirectory();
 
-        if (!currentWallpaper || currentWallpaper.startsWith("#")) {
+        if (!dir) {
             if (CacheData.wallpaperLastPath && CacheData.wallpaperLastPath !== "") {
                 wallpaperDir = CacheData.wallpaperLastPath;
             } else {
                 wallpaperDir = "";
             }
+            recursiveWallpaperPaths = [];
+            recursiveModelReady = true;
+            rebuildWallpaperList(true);
             return;
         }
 
-        wallpaperDir = currentWallpaper.substring(0, currentWallpaper.lastIndexOf('/'));
+        wallpaperDir = dir;
+
+        // Start recursive find
+        startRecursiveFind();
+    }
+
+    function buildFindCommand(dir) {
+        return ["sh", "-c", 'find -L "$1" -type f \\( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.bmp" -o -iname "*.gif" -o -iname "*.webp" -o -iname "*.jxl" -o -iname "*.avif" -o -iname "*.heif" -o -iname "*.exr" \\) 2>/dev/null | sort', "find", dir];
+    }
+
+    function startRecursiveFind() {
+        if (recursiveModelLoading) {
+            return;
+        }
+
+        recursiveModelLoading = true;
+        recursiveModelReady = false;
+
+        wallpaperFindProcess.currentGeneration++;
+        const generation = wallpaperFindProcess.currentGeneration;
+        const dir = getWallpaperDirectory();
+
+        if (!dir) {
+            recursiveWallpaperPaths = [];
+            recursiveModelLoading = false;
+            recursiveModelReady = true;
+            rebuildWallpaperList(true);
+            return;
+        }
+
+        const cmd = buildFindCommand(dir);
+        wallpaperFindProcess.currentGeneration = generation;
+        wallpaperFindProcess.command = cmd;
+        wallpaperFindProcess.running = true;
+    }
+
+    function onWallpaperFindFinished(output, generation) {
+        if (generation !== wallpaperFindProcess.currentGeneration) {
+            return;
+        }
+
+        if (!output || !output.trim()) {
+            recursiveWallpaperPaths = [];
+            recursiveModelLoading = false;
+            recursiveModelReady = true;
+            rebuildWallpaperList(true);
+            return;
+        }
+
+        const lines = output.trim().split('\n');
+        const paths = [];
+
+        for (let i = 0; i < lines.length; i++) {
+            const filePath = lines[i].trim();
+            if (!filePath)
+                continue;
+
+            const ext = filePath.split('.').pop().toLowerCase();
+            if (!["jpg", "jpeg", "png", "bmp", "gif", "webp", "jxl", "avif", "heif", "exr"].includes(ext)) {
+                continue;
+            }
+
+            paths.push(filePath);
+        }
+
+        // Sort paths
+        paths.sort();
+
+        recursiveWallpaperPaths = paths;
+        recursiveModelLoading = false;
+        recursiveModelReady = true;
+
+        rebuildWallpaperList(true);
     }
 
     function updateSelectedFileName() {
@@ -488,6 +632,13 @@ Item {
         }
         function onStatusChanged() {
             rebuildWallpaperList(wallpaperFolderModel.status === FolderListModel.Ready);
+        }
+    }
+
+    // Trigger rebuild when recursive model becomes ready
+    onRecursiveModelReadyChanged: {
+        if (recursiveModelReady) {
+            rebuildWallpaperList(true);
         }
     }
 
