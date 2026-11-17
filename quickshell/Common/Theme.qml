@@ -1494,13 +1494,13 @@ Singleton {
 
     function barTextSize(barThickness, fontScale, maximizeText) {
         const scale = barThickness / 48;
-        const dankBarScale = fontScale !== undefined ? fontScale : 1.0;
+        const topBarScale = fontScale !== undefined ? fontScale : 1.0;
         const maxScale = (maximizeText ?? false) ? 1.5 : 1.0;
         if (scale <= 0.75)
-            return Math.round(fontSizeSmall * 0.9 * dankBarScale * maxScale);
+            return Math.round(fontSizeSmall * 0.9 * topBarScale * maxScale);
         if (scale >= 1.25)
-            return Math.round(fontSizeMedium * dankBarScale * maxScale);
-        return Math.round(fontSizeSmall * dankBarScale * maxScale);
+            return Math.round(fontSizeMedium * topBarScale * maxScale);
+        return Math.round(fontSizeSmall * topBarScale * maxScale);
     }
 
     function getBatteryIcon(level, isCharging, batteryAvailable) {
@@ -1579,7 +1579,6 @@ Singleton {
         }
 
         if (workerRunning) {
-            log.info("Worker already running, queueing request");
             pendingThemeRequest = {
                 kind,
                 value,
@@ -2158,7 +2157,6 @@ Singleton {
 
             const req = pendingThemeRequest;
             pendingThemeRequest = null;
-            log.info("Processing queued theme request");
             setDesiredTheme(req.kind, req.value, req.isLight, req.iconTheme, req.matugenType, req.stockColors);
         }
     }

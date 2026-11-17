@@ -739,7 +739,7 @@ Singleton {
     property string monoFontFamily: "Fira Code"
     property int fontWeight: Font.Normal
     property real fontScale: 1.0
-    property real dankBarFontScale: 1.0
+    property real topBarFontScale: 1.0
     property int textRenderType: SettingsData.TextRenderType.Qt
     property int textRenderQuality: SettingsData.TextRenderQuality.Default
 
@@ -1486,7 +1486,7 @@ Singleton {
         saveSettings();
     }
 
-    signal forceDankBarLayoutRefresh
+    signal forceTopBarLayoutRefresh
     signal forceDockLayoutRefresh
     signal widgetDataChanged
     signal workspaceIconsUpdated
@@ -3044,22 +3044,22 @@ Singleton {
         // -1 matches no Position, so island-only setups have no dock conflict.
         const barPos = defaultBar ? (defaultBar.position ?? SettingsData.Position.Top) : -1;
         if (position === SettingsData.Position.Bottom && barPos === SettingsData.Position.Bottom && showDock) {
-            setDankBarPosition(SettingsData.Position.Top);
+            setTopBarPosition(SettingsData.Position.Top);
         }
         if (position === SettingsData.Position.Top && barPos === SettingsData.Position.Top && showDock) {
-            setDankBarPosition(SettingsData.Position.Bottom);
+            setTopBarPosition(SettingsData.Position.Bottom);
         }
         if (position === SettingsData.Position.Left && barPos === SettingsData.Position.Left && showDock) {
-            setDankBarPosition(SettingsData.Position.Right);
+            setTopBarPosition(SettingsData.Position.Right);
         }
         if (position === SettingsData.Position.Right && barPos === SettingsData.Position.Right && showDock) {
-            setDankBarPosition(SettingsData.Position.Left);
+            setTopBarPosition(SettingsData.Position.Left);
         }
         saveSettings();
         Qt.callLater(() => forceDockLayoutRefresh());
     }
 
-    function setDankBarPosition(position) {
+    function setTopBarPosition(position) {
         const defaultBar = getPrimaryBarConfig();
         if (!defaultBar)
             return;
@@ -3084,7 +3084,7 @@ Singleton {
         });
     }
 
-    function setDankBarLeftWidgets(order) {
+    function setTopBarLeftWidgets(order) {
         const defaultBar = getPrimaryBarConfig();
         if (defaultBar) {
             updateBarConfig(defaultBar.id, {
@@ -3094,7 +3094,7 @@ Singleton {
         }
     }
 
-    function setDankBarCenterWidgets(order) {
+    function setTopBarCenterWidgets(order) {
         const defaultBar = getPrimaryBarConfig();
         if (defaultBar) {
             updateBarConfig(defaultBar.id, {
@@ -3104,7 +3104,7 @@ Singleton {
         }
     }
 
-    function setDankBarRightWidgets(order) {
+    function setTopBarRightWidgets(order) {
         const defaultBar = getPrimaryBarConfig();
         if (defaultBar) {
             updateBarConfig(defaultBar.id, {
