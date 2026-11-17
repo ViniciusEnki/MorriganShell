@@ -8,6 +8,9 @@ import qs.Modules.Settings.Widgets
 Item {
     id: root
 
+    property string paddingCountEditValue: SettingsData.workspacePaddingCount
+    property string maxWorkspaceIconsEditValue: SettingsData.maxWorkspaceIcons
+
     DankFlickable {
         anchors.fill: parent
         clip: true
@@ -47,13 +50,129 @@ Item {
                     onToggled: checked => SettingsData.set("showWorkspaceName", checked)
                 }
 
+                SettingsDropdownRow {
+                    settingKey: "workspaceSwitcherStyle"
+                    tags: ["workspace", "style", "pills", "dots"]
+                    text: I18n.tr("Workspace Switcher Style")
+                    description: I18n.tr("Choose between pill or dot style for workspace indicators")
+                    options: [I18n.tr("Pills"), I18n.tr("Dots")]
+                    currentValue: SettingsData.workspaceSwitcherStyle === "pills" ? I18n.tr("Pills") : I18n.tr("Dots")
+                    onValueChanged: value => SettingsData.set("workspaceSwitcherStyle", value === I18n.tr("Pills") ? "pills" : "dots")
+                }
+
+                SettingsToggleRow {
+                    settingKey: "workspaceUniformSize"
+                    tags: ["workspace", "size", "uniform", "equal"]
+                    text: I18n.tr("Uniform Workspace Size")
+                    description: I18n.tr("Make all workspace indicators the same size, regardless of active state")
+                    checked: SettingsData.workspaceUniformSize
+                    onToggled: checked => SettingsData.set("workspaceUniformSize", checked)
+                }
+
+                SettingsToggleRow {
+                    settingKey: "workspacePreservePositions"
+                    tags: ["workspace", "positions", "preserve", "order"]
+                    text: I18n.tr("Preserve Workspace Positions")
+                    description: I18n.tr("Keep workspaces at their numbered positions, inserting placeholders for gaps")
+                    checked: SettingsData.workspacePreservePositions
+                    onToggled: checked => SettingsData.set("workspacePreservePositions", checked)
+                }
+
                 SettingsToggleRow {
                     settingKey: "showWorkspacePadding"
                     tags: ["workspace", "padding", "minimum"]
                     text: I18n.tr("Workspace Padding")
-                    description: I18n.tr("Always show a minimum of 3 workspaces, even if fewer are available")
+                    description: I18n.tr("Always show a minimum number of workspaces, even if fewer are available")
                     checked: SettingsData.showWorkspacePadding
                     onToggled: checked => SettingsData.set("showWorkspacePadding", checked)
+                }
+
+                Item {
+                    width: parent.width
+                    height: paddingCountColumn.height
+                    visible: SettingsData.showWorkspacePadding
+                    opacity: visible ? 1 : 0
+
+                    Column {
+                        id: paddingCountColumn
+                        x: Theme.spacingL
+                        width: 120
+                        spacing: Theme.spacingS
+
+                        StyledText {
+                            text: I18n.tr("Workspaces to show (2-10)")
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.surfaceText
+                            font.weight: Font.Medium
+                            horizontalAlignment: Text.AlignLeft
+                        }
+
+                        Row {
+                            width: 100
+                            height: 28
+                            spacing: Theme.spacingXS
+
+                            DankTextField {
+                                id: paddingCountField
+                                width: 70
+                                height: 28
+                                placeholderText: "3"
+                                text: paddingCountEditValue
+                                font.pixelSize: Theme.fontSizeSmall
+                                topPadding: Theme.spacingXS
+                                bottomPadding: Theme.spacingXS
+                                onTextChanged: {
+                                    paddingCountEditValue = text;
+                                }
+                                onEditingFinished: {
+                                    const raw = text.trim();
+                                    if (raw === "") {
+                                        return;
+                                    }
+                                    if (!/^-?\d+$/.test(raw)) {
+                                        return;
+                                    }
+                                    const value = Number(raw);
+                                    if (!Number.isSafeInteger(value)) {
+                                        return;
+                                    }
+                                    paddingCountEditValue = String(value);
+                                }
+                            }
+
+                            DankButton {
+                                width: 24
+                                height: 24
+                                iconName: "check"
+                                iconSize: 14
+                                backgroundColor: Theme.primary
+                                textColor: Theme.primaryText
+                                visible: paddingCountEditValue !== SettingsData.workspacePaddingCount
+                                toolTip: I18n.tr("Save")
+                                onClicked: {
+                                    const raw = paddingCountField.text.trim();
+                                    if (raw === "" || !/^-?\d+$/.test(raw)) {
+                                        return;
+                                    }
+                                    const value = Number(raw);
+                                    if (!Number.isSafeInteger(value)) {
+                                        return;
+                                    }
+                                    const normalized = Math.max(2, Math.min(10, value));
+                                    SettingsData.set("workspacePaddingCount", normalized);
+                                    paddingCountEditValue = String(normalized);
+                                    paddingCountField.setFocus(false);
+                                }
+                            }
+                        }
+                    }
+
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: Theme.mediumDuration
+                            easing.type: Theme.emphasizedEasing
+                        }
+                    }
                 }
 
                 SettingsToggleRow {
@@ -87,16 +206,63 @@ Item {
                             horizontalAlignment: Text.AlignLeft
                         }
 
-                        DankTextField {
+                        Row {
                             width: 100
                             height: 28
-                            placeholderText: "3"
-                            text: SettingsData.maxWorkspaceIcons
-                            maximumLength: 2
-                            font.pixelSize: Theme.fontSizeSmall
-                            topPadding: Theme.spacingXS
-                            bottomPadding: Theme.spacingXS
-                            onEditingFinished: SettingsData.set("maxWorkspaceIcons", parseInt(text, 10))
+                            spacing: Theme.spacingXS
+
+                            DankTextField {
+                                id: maxAppsField
+                                width: 70
+                                height: 28
+                                placeholderText: "3"
+                                text: maxWorkspaceIconsEditValue
+                                maximumLength: 2
+                                font.pixelSize: Theme.fontSizeSmall
+                                topPadding: Theme.spacingXS
+                                bottomPadding: Theme.spacingXS
+                                onTextChanged: {
+                                    maxWorkspaceIconsEditValue = text;
+                                }
+                                onEditingFinished: {
+                                    const raw = text.trim();
+                                    if (raw === "") {
+                                        return;
+                                    }
+                                    if (!/^\d+$/.test(raw)) {
+                                        return;
+                                    }
+                                    const value = parseInt(text, 10);
+                                    if (!Number.isSafeInteger(value) || value < 0) {
+                                        return;
+                                    }
+                                    maxWorkspaceIconsEditValue = value;
+                                }
+                            }
+
+                            DankButton {
+                                width: 24
+                                height: 24
+                                iconName: "check"
+                                iconSize: 14
+                                backgroundColor: Theme.primary
+                                textColor: Theme.primaryText
+                                visible: maxWorkspaceIconsEditValue !== SettingsData.maxWorkspaceIcons
+                                toolTip: I18n.tr("Save")
+                                onClicked: {
+                                    const raw = maxAppsField.text.trim();
+                                    if (raw === "" || !/^\d+$/.test(raw)) {
+                                        return;
+                                    }
+                                    const value = parseInt(raw, 10);
+                                    if (!Number.isSafeInteger(value) || value < 0) {
+                                        return;
+                                    }
+                                    SettingsData.set("maxWorkspaceIcons", value);
+                                    maxWorkspaceIconsEditValue = String(value);
+                                    maxAppsField.setFocus(false);
+                                }
+                            }
                         }
                     }
 
