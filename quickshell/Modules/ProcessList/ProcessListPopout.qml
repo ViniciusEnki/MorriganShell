@@ -62,6 +62,7 @@ DankPopout {
 
     Ref {
         service: DgopService
+        modules: "system"
         active: processListPopout.shouldBeVisible
     }
 
