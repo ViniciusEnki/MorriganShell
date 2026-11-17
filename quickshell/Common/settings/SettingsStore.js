@@ -170,8 +170,9 @@ function toJson(root) {
         var value = root[k];
         if (k === "desktopWidgetInstances") value = withoutInstancePositions(value);
         if (k === "builtInPluginSettings") value = withoutSessionBackedPluginState(value);
-        if (Util.isDefault(value, SPEC[k].def)) continue;
-        out[k] = value;
+        if (!Util.isDefault(value, SPEC[k].def)) {
+            out[k] = value;
+        }
     }
     out.configVersion = root.settingsConfigVersion;
     return out;
@@ -254,12 +255,14 @@ function migrateToVersion(obj, targetVersion) {
         }
 
         settings.configVersion = 2;
+        currentVersion = 2;
     }
 
     if (currentVersion < 3) {
         console.info("Migrating settings from version", currentVersion, "to version 3");
         console.info("Per-widget controlCenterButton config now supported via widgetData properties");
         settings.configVersion = 3;
+        currentVersion = 3;
     }
 
     if (currentVersion < 4) {
@@ -355,6 +358,7 @@ function migrateToVersion(obj, targetVersion) {
 
         settings.desktopWidgetInstances = instances;
         settings.configVersion = 4;
+        currentVersion = 4;
     }
 
     if (currentVersion < 5) {
@@ -365,6 +369,7 @@ function migrateToVersion(obj, targetVersion) {
         delete settings.weatherCoordinates;
 
         settings.configVersion = 5;
+        currentVersion = 5;
     }
 
     if (currentVersion < 6) {
@@ -384,10 +389,12 @@ function migrateToVersion(obj, targetVersion) {
         }
 
         settings.configVersion = 6;
+        currentVersion = 6;
     }
 
     if (currentVersion < 11) {
         settings.configVersion = 11;
+        currentVersion = 11;
     }
 
     if (currentVersion < 12) {
@@ -399,6 +406,7 @@ function migrateToVersion(obj, targetVersion) {
             delete settings.batteryNotificationType;
         }
         settings.configVersion = 12;
+        currentVersion = 12;
     }
 
     if (currentVersion < 13) {
@@ -410,6 +418,7 @@ function migrateToVersion(obj, targetVersion) {
         }
 
         settings.configVersion = 13;
+        currentVersion = 13;
     }
 
     if (currentVersion < 14) {
@@ -418,6 +427,7 @@ function migrateToVersion(obj, targetVersion) {
 
         Util.stripDefaults(settings, SpecModule.SPEC);
         settings.configVersion = 14;
+        currentVersion = 14;
     }
 
     if (currentVersion < 15) {
@@ -437,6 +447,7 @@ function migrateToVersion(obj, targetVersion) {
         }
 
         settings.configVersion = 15;
+        currentVersion = 15;
     }
 
     if (currentVersion < 16) {
@@ -449,6 +460,7 @@ function migrateToVersion(obj, targetVersion) {
         delete settings.spotlightCloseNiriOverview;
 
         settings.configVersion = 16;
+        currentVersion = 16;
     }
 
     if (currentVersion < 17) {
@@ -468,6 +480,7 @@ function migrateToVersion(obj, targetVersion) {
         }
 
         settings.configVersion = 17;
+        currentVersion = 17;
     }
 
     if (currentVersion < 18) {
@@ -491,6 +504,30 @@ function migrateToVersion(obj, targetVersion) {
         delete settings.dankIslandBarId;
 
         settings.configVersion = 18;
+        currentVersion = 18;
+    }
+
+    if (currentVersion < 19) {
+        console.info("Migrating settings from version", currentVersion, "to version 19");
+        console.info("Normalizing workspacePreservePositions null to true and removing workspaceUniformSizeMode");
+
+        if (settings.workspacePreservePositions === null || typeof settings.workspacePreservePositions !== "boolean") {
+            settings.workspacePreservePositions = true;
+        }
+        if (settings.workspaceUniformSizeMode !== undefined) {
+            delete settings.workspaceUniformSizeMode;
+        }
+
+        settings.configVersion = 19;
+        currentVersion = 19;
+    }
+
+    if (currentVersion < 20) {
+        console.info("Migrating settings from version", currentVersion, "to version 20");
+        console.info("Version bump to 20 (no schema changes from v19)");
+
+        settings.configVersion = 20;
+        currentVersion = 20;
     }
 
     return settings;

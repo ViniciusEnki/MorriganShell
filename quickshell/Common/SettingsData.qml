@@ -16,7 +16,7 @@ Singleton {
     id: root
     readonly property var log: Log.scoped("SettingsData")
 
-    readonly property int settingsConfigVersion: 18
+    readonly property int settingsConfigVersion: 20
 
     readonly property bool isGreeterMode: Quickshell.env("DMS_RUN_GREETER") === "1" || Quickshell.env("DMS_RUN_GREETER") === "true"
 
@@ -159,9 +159,9 @@ Singleton {
         });
     }
 
-    property alias dankBarLeftWidgetsModel: leftWidgetsModel
-    property alias dankBarCenterWidgetsModel: centerWidgetsModel
-    property alias dankBarRightWidgetsModel: rightWidgetsModel
+    property alias topBarLeftWidgetsModel: leftWidgetsModel
+    property alias topBarCenterWidgetsModel: centerWidgetsModel
+    property alias topBarRightWidgetsModel: rightWidgetsModel
 
     property string currentThemeName: "purple"
     property string currentThemeCategory: "generic"
@@ -468,13 +468,30 @@ Singleton {
     property bool showWorkspaceIndex: false
     property bool showWorkspaceName: false
     property bool showWorkspacePadding: false
+    onShowWorkspacePaddingChanged: saveSettings()
+    property int workspacePaddingCount: 3
+    onWorkspacePaddingCountChanged: {
+        if (workspacePaddingCount < 2)
+            workspacePaddingCount = 2;
+        else if (workspacePaddingCount > 10)
+            workspacePaddingCount = 10;
+        saveSettings();
+    }
+    property string workspaceSwitcherStyle: "pills"
+    onWorkspaceSwitcherStyleChanged: saveSettings()
+    property bool workspaceUniformSize: false
+    onWorkspaceUniformSizeChanged: saveSettings()
+    property bool workspacePreservePositions: true
+    onWorkspacePreservePositionsChanged: saveSettings()
     property bool workspaceScrolling: false
     property bool showWorkspaceApps: false
     property bool workspaceDragReorder: true
-    property bool groupWorkspaceApps: true
-    property bool groupActiveWorkspaceApps: false
     property int maxWorkspaceIcons: 3
     property int workspaceAppIconSizeOffset: 0
+    property bool groupWorkspaceApps: true
+    onGroupWorkspaceAppsChanged: saveSettings()
+    property bool groupActiveWorkspaceApps: false
+    onGroupActiveWorkspaceAppsChanged: saveSettings()
     property bool workspaceFollowFocus: false
     property bool showOccupiedWorkspacesOnly: false
     property bool reverseScrolling: false
@@ -989,7 +1006,7 @@ Singleton {
     property bool notificationDndAllowCritical: true
     property bool notificationFocusedMonitor: false
     // Island is a per-instance render mode: any bar config with island:true draws as an island
-    // instead of a DankBar, and carries its own island* look settings.
+    // instead of a TopBar, and carries its own island* look settings.
     readonly property var islandBarConfigs: {
         barConfigs;
         return (barConfigs || []).filter(cfg => cfg && cfg.island === true);
