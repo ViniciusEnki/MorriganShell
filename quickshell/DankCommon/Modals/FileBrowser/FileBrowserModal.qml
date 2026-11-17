@@ -1,4 +1,5 @@
 import QtQuick
+import qs.Services
 import Quickshell
 import qs.DankCommon.Common
 import qs.DankCommon.Widgets
@@ -24,10 +25,10 @@ FloatingWindow {
     property bool allowStacking: true
 
     onFolderModeChanged: {
-        console.log("[FileBrowserModal] folderMode changed", { folderMode: folderMode, browserType: browserType });
+        log.info("[FileBrowserModal] folderMode changed", { folderMode: folderMode, browserType: browserType });
     }
     onBrowserTypeChanged: {
-        console.log("[FileBrowserModal] browserType changed", { browserType: browserType, folderMode: folderMode });
+        log.info("[FileBrowserModal] browserType changed", { browserType: browserType, folderMode: folderMode });
     }
 
     readonly property var _screen: screen ?? (Quickshell.screens.length > 0 ? Quickshell.screens[0] : null)
@@ -114,7 +115,7 @@ FloatingWindow {
 
             onFileSelected: path => {
                 const cleanPath = path.startsWith("file://") ? decodeURIComponent(path.substring(7)) : path;
-                console.log("[FileBrowserModal] onFileSelected", { rawPath: path, cleanPath: cleanPath, folderMode: folderMode, browserType: browserType });
+                log.info("[FileBrowserModal] onFileSelected", { rawPath: path, cleanPath: cleanPath, folderMode: folderMode, browserType: browserType });
                 fileBrowserModal.fileSelected(cleanPath);
             }
             onCloseRequested: fileBrowserModal.close()

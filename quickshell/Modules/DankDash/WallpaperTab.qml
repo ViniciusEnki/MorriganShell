@@ -1,4 +1,5 @@
 import Qt.labs.folderlistmodel
+import qs.Services
 import QtCore
 import QtQuick
 import Quickshell
@@ -62,7 +63,7 @@ Item {
         stderr: StdioCollector {
             onStreamFinished: {
                 if (text && text.trim()) {
-                    console.warn("[WallpaperTab] find stderr:", { stderr: text.trim(), generation: wallpaperFindProcess.currentGeneration });
+                    log.warn("[WallpaperTab] find stderr:", { stderr: text.trim(), generation: wallpaperFindProcess.currentGeneration });
                 }
             }
         }

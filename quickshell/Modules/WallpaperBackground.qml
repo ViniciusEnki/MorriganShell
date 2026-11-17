@@ -564,7 +564,7 @@ Variants {
                 }
             }
 
-            
+
 
             Component.onDestruction: {
                 SessionData.clearMonitorScrollPosition(modelData.name);

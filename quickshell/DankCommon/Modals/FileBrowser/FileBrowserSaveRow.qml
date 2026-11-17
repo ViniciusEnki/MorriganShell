@@ -1,4 +1,5 @@
 import QtQuick
+import qs.Services
 import qs.DankCommon.Common
 import qs.DankCommon.Widgets
 
@@ -113,7 +114,7 @@ Row {
             cornerRadius: Style.cornerRadius
             onClicked: {
                 var basePath = currentPath.replace(/^file:\/\//, '');
-                console.log("[FileBrowserSaveRow] Use this folder clicked", { currentPath: currentPath, basePath: basePath });
+                log.info("[FileBrowserSaveRow] Use this folder clicked", { currentPath: currentPath, basePath: basePath });
                 saveRow.folderSelected(basePath);
             }
         }

@@ -1486,8 +1486,7 @@
       "workspace"
     ],
     "icon": "view_module",
-    "description": "Show workspace index numbers in the top bar workspace switcher",
-    "conditionKey": "smartDockCapable"
+    "description": "Show workspace index numbers in the top bar workspace switcher"
   },
   {
     "section": "groupActiveWorkspaceApps",
@@ -1587,6 +1586,33 @@
       "workspace"
     ],
     "icon": "label"
+  },
+  {
+    "section": "workspacePreservePositions",
+    "label": "Preserve Workspace Positions",
+    "tabIndex": 4,
+    "category": "Bar",
+    "keywords": [
+      "bar",
+      "desktop",
+      "desktops",
+      "gaps",
+      "inserting",
+      "keep",
+      "numbered",
+      "order",
+      "panel",
+      "placeholders",
+      "positions",
+      "preserve",
+      "statusbar",
+      "their",
+      "topbar",
+      "virtual",
+      "workspace",
+      "workspaces"
+    ],
+    "description": "Keep workspaces at their numbered positions, inserting placeholders for gaps"
   },
   {
     "section": "reverseScrolling",
@@ -1727,6 +1753,31 @@
     "conditionKey": "smartDockCapable"
   },
   {
+    "section": "workspaceUniformSize",
+    "label": "Uniform Workspace Size",
+    "tabIndex": 4,
+    "category": "Bar",
+    "keywords": [
+      "active",
+      "bar",
+      "desktop",
+      "equal",
+      "indicators",
+      "make",
+      "panel",
+      "regardless",
+      "same",
+      "size",
+      "state",
+      "statusbar",
+      "topbar",
+      "uniform",
+      "virtual",
+      "workspace"
+    ],
+    "description": "Make all workspace indicators the same size, regardless of active state"
+  },
+  {
     "section": "showWorkspaceIndex",
     "label": "Workspace Index Numbers",
     "tabIndex": 4,
@@ -1788,6 +1839,7 @@
       "even",
       "fewer",
       "minimum",
+      "number",
       "padding",
       "panel",
       "show",
@@ -1797,7 +1849,31 @@
       "workspace",
       "workspaces"
     ],
-    "description": "Always show a minimum of 3 workspaces, even if fewer are available"
+    "description": "Always show a minimum number of workspaces, even if fewer are available"
+  },
+  {
+    "section": "workspaceSwitcherStyle",
+    "label": "Workspace Switcher Style",
+    "tabIndex": 4,
+    "category": "Bar",
+    "keywords": [
+      "bar",
+      "between",
+      "choose",
+      "desktop",
+      "dots",
+      "indicators",
+      "panel",
+      "pill",
+      "pills",
+      "statusbar",
+      "style",
+      "switcher",
+      "topbar",
+      "virtual",
+      "workspace"
+    ],
+    "description": "Choose between pill or dot style for workspace indicators"
   },
   {
     "section": "_tab_4",
@@ -2584,7 +2660,6 @@
     "category": "Bar",
     "keywords": [
       "bar",
-      "dankbar",
       "font",
       "independently",
       "panel",
@@ -2595,7 +2670,7 @@
       "topbar"
     ],
     "icon": "text_fields",
-    "description": "Scale DankBar font sizes independently"
+    "description": "Scale TopBar font sizes independently"
   },
   {
     "section": "barIconScale",
@@ -2604,7 +2679,6 @@
     "category": "Bar",
     "keywords": [
       "bar",
-      "dankbar",
       "icon",
       "independently",
       "panel",
@@ -2615,7 +2689,7 @@
       "topbar"
     ],
     "icon": "interests",
-    "description": "Scale DankBar icon sizes independently"
+    "description": "Scale TopBar icon sizes independently"
   },
   {
     "section": "barShadowDirectionManual",
