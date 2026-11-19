@@ -21,10 +21,7 @@ Item {
     property string wallpaperDir: ""
     readonly property string searchQuery: wallpaperSearchField.text
     property var filteredWallpaperPaths: []
-    property int currentPage: 0
-    property int itemsPerPage: 16
     readonly property int wallpaperCount: filteredWallpaperPaths.length
-    property int totalPages: Math.max(1, Math.ceil(wallpaperCount / itemsPerPage))
     property bool active: false
     property bool searchExpanded: false
     property Item focusTarget: searchExpanded ? wallpaperSearchField : searchToggleButton
@@ -40,9 +37,8 @@ Item {
     // Shared with the wallpaper FileBrowser via CacheData.fileBrowserSettings["wallpaper"]
     property string sortBy: "name"
     property bool sortAscending: true
-    // Forces the page grid to rebuild when the folder model reorders in place.
+    // Forces the grid to rebuild when the folder model reorders in place.
     property int gridRevision: 0
-    property int pagerCachePages: 1
 
     // Recursive wallpaper model
     property var recursiveWallpaperPaths: []
@@ -89,10 +85,6 @@ Item {
         if (index < 0 || index >= wallpaperCount)
             return "";
         return filteredWallpaperPaths[index] || "";
-    }
-
-    function pageItemCount(page) {
-        return Math.max(0, Math.min(itemsPerPage, wallpaperCount - page * itemsPerPage));
     }
 
     function searchTerms() {
@@ -153,23 +145,17 @@ Item {
             if (currentWallpaper) {
                 for (let i = 0; i < paths.length; i++) {
                     if (paths[i] === currentWallpaper) {
-                        currentPage = Math.floor(i / itemsPerPage);
-                        gridIndex = i % itemsPerPage;
+                        gridIndex = i;
                         matched = true;
                         break;
                     }
                 }
             }
             if (!matched) {
-                currentPage = 0;
                 gridIndex = 0;
             }
         } else {
-            const nextTotal = Math.max(1, Math.ceil(paths.length / itemsPerPage));
-            if (currentPage >= nextTotal)
-                currentPage = Math.max(0, nextTotal - 1);
-            const visibleCount = Math.max(0, Math.min(itemsPerPage, paths.length - currentPage * itemsPerPage));
-            gridIndex = visibleCount > 0 ? Math.min(gridIndex, visibleCount - 1) : 0;
+            gridIndex = Math.min(gridIndex, Math.max(0, paths.length - 1));
         }
 
         filteredWallpaperPaths = paths;
@@ -204,7 +190,6 @@ Item {
     onSortByChanged: refreshAfterSort()
     onSortAscendingChanged: refreshAfterSort()
     onSearchQueryChanged: {
-        currentPage = 0;
         gridIndex = 0;
         searchDebounce.restart();
     }
@@ -270,14 +255,6 @@ Item {
         }
     }
 
-    onCurrentPageChanged: updateSelectedFileName()
-
-    onTotalPagesChanged: {
-        if (currentPage >= totalPages) {
-            currentPage = Math.max(0, totalPages - 1);
-        }
-    }
-
     onGridIndexChanged: {
         updateSelectedFileName();
     }
@@ -306,29 +283,19 @@ Item {
         }
     }
 
-    function goToNextCell(visibleCount) {
-        if (gridIndex + 1 < visibleCount) {
+    function goToNextCell() {
+        if (gridIndex + 1 < wallpaperCount) {
             gridIndex++;
-        } else if (currentPage < totalPages - 1) {
+        } else if (wallpaperCount > 1) {
             gridIndex = 0;
-            currentPage++;
-        } else if (totalPages > 1) {
-            gridIndex = 0;
-            currentPage = 0;
         }
     }
 
     function goToPrevCell() {
         if (gridIndex > 0) {
             gridIndex--;
-        } else if (currentPage > 0) {
-            currentPage--;
-            const prevPageCount = pageItemCount(currentPage);
-            gridIndex = prevPageCount - 1;
-        } else if (totalPages > 1) {
-            currentPage = totalPages - 1;
-            const lastPageCount = pageItemCount(currentPage);
-            gridIndex = lastPageCount - 1;
+        } else if (wallpaperCount > 1) {
+            gridIndex = wallpaperCount - 1;
         }
     }
 
@@ -362,17 +329,12 @@ Item {
             return true;
         }
         const columns = 4;
-        const currentCol = gridIndex % columns;
-        const visibleCount = pageItemCount(currentPage);
 
         if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-            if (gridIndex >= 0 && gridIndex < visibleCount) {
-                const absoluteIndex = currentPage * itemsPerPage + gridIndex;
-                if (absoluteIndex < wallpaperCount) {
-                    const filePath = wallpaperPathAt(absoluteIndex);
-                    if (filePath) {
-                        setCurrentWallpaper(filePath);
-                    }
+            if (gridIndex >= 0 && gridIndex < wallpaperCount) {
+                const filePath = filteredWallpaperPaths[gridIndex];
+                if (filePath) {
+                    setCurrentWallpaper(filePath);
                 }
             }
             return true;
@@ -382,14 +344,14 @@ Item {
             if (I18n.isRtl) {
                 goToPrevCell();
             } else {
-                goToNextCell(visibleCount);
+                goToNextCell();
             }
             return true;
         }
 
         if (event.key === Qt.Key_Left || event.key === Qt.Key_H) {
             if (I18n.isRtl) {
-                goToNextCell(visibleCount);
+                goToNextCell();
             } else {
                 goToPrevCell();
             }
@@ -397,14 +359,10 @@ Item {
         }
 
         if (event.key === Qt.Key_Down || event.key === Qt.Key_J) {
-            if (gridIndex + columns < visibleCount) {
+            if (gridIndex + columns < wallpaperCount) {
                 gridIndex += columns;
-            } else if (currentPage < totalPages - 1) {
-                gridIndex = currentCol;
-                currentPage++;
-            } else if (totalPages > 1) {
-                gridIndex = currentCol;
-                currentPage = 0;
+            } else if (wallpaperCount > 1) {
+                gridIndex = wallpaperCount - 1;
             }
             return true;
         }
@@ -412,44 +370,29 @@ Item {
         if (event.key === Qt.Key_Up || event.key === Qt.Key_K) {
             if (gridIndex >= columns) {
                 gridIndex -= columns;
-            } else if (currentPage > 0) {
-                currentPage--;
-                const prevPageCount = pageItemCount(currentPage);
-                const prevPageRows = Math.ceil(prevPageCount / columns);
-                gridIndex = (prevPageRows - 1) * columns + currentCol;
-                gridIndex = Math.min(gridIndex, prevPageCount - 1);
-            } else if (totalPages > 1) {
-                currentPage = totalPages - 1;
-                const lastPageCount = pageItemCount(currentPage);
-                const lastPageRows = Math.ceil(lastPageCount / columns);
-                gridIndex = (lastPageRows - 1) * columns + currentCol;
-                gridIndex = Math.min(gridIndex, lastPageCount - 1);
+            } else if (wallpaperCount > 1) {
+                gridIndex = 0;
             }
             return true;
         }
 
-        if (event.key === Qt.Key_PageUp && totalPages > 1) {
-            gridIndex = 0;
-            currentPage = (currentPage - 1 + totalPages) % totalPages;
+        if (event.key === Qt.Key_PageUp) {
+            gridIndex = Math.max(0, gridIndex - columns * 4);
             return true;
         }
 
-        if (event.key === Qt.Key_PageDown && totalPages > 1) {
-            gridIndex = 0;
-            currentPage = (currentPage + 1) % totalPages;
+        if (event.key === Qt.Key_PageDown) {
+            gridIndex = Math.min(wallpaperCount - 1, gridIndex + columns * 4);
             return true;
         }
 
-        if (event.key === Qt.Key_Home && event.modifiers & Qt.ControlModifier) {
+        if (event.key === Qt.Key_Home && (event.modifiers & Qt.ControlModifier)) {
             gridIndex = 0;
-            currentPage = 0;
             return true;
         }
 
-        if (event.key === Qt.Key_End && event.modifiers & Qt.ControlModifier) {
-            currentPage = totalPages - 1;
-            const lastPageCount = pageItemCount(currentPage);
-            gridIndex = Math.max(0, lastPageCount - 1);
+        if (event.key === Qt.Key_End && (event.modifiers & Qt.ControlModifier)) {
+            gridIndex = Math.max(0, wallpaperCount - 1);
             return true;
         }
 
@@ -469,12 +412,9 @@ Item {
         }
 
         for (var i = 0; i < wallpaperCount; i++) {
-            const filePath = wallpaperPathAt(i);
+            const filePath = filteredWallpaperPaths[i];
             if (filePath === currentWallpaper) {
-                const targetPage = Math.floor(i / itemsPerPage);
-                const targetIndex = i % itemsPerPage;
-                currentPage = targetPage;
-                gridIndex = targetIndex;
+                gridIndex = i;
                 updateSelectedFileName();
                 Qt.callLater(() => {
                     enableAnimation = true;
@@ -497,14 +437,14 @@ Item {
                 wallpaperDir = CacheData.wallpaperLastPath;
             } else {
                 wallpaperDir = "";
+                recursiveWallpaperPaths = [];
+                recursiveModelReady = true;
+                rebuildWallpaperList(true);
+                return;
             }
-            recursiveWallpaperPaths = [];
-            recursiveModelReady = true;
-            rebuildWallpaperList(true);
-            return;
+        } else {
+            wallpaperDir = dir;
         }
-
-        wallpaperDir = dir;
 
         // Start recursive find
         startRecursiveFind();
@@ -519,14 +459,7 @@ Item {
             return;
         }
 
-        recursiveModelLoading = true;
-        recursiveModelReady = false;
-
-        wallpaperFindProcess.currentGeneration++;
-        const generation = wallpaperFindProcess.currentGeneration;
-        const dir = getWallpaperDirectory();
-
-        if (!dir) {
+        if (!wallpaperDir) {
             recursiveWallpaperPaths = [];
             recursiveModelLoading = false;
             recursiveModelReady = true;
@@ -534,7 +467,13 @@ Item {
             return;
         }
 
-        const cmd = buildFindCommand(dir);
+        recursiveModelLoading = true;
+        recursiveModelReady = false;
+
+        wallpaperFindProcess.currentGeneration++;
+        const generation = wallpaperFindProcess.currentGeneration;
+
+        const cmd = buildFindCommand(wallpaperDir);
         wallpaperFindProcess.currentGeneration = generation;
         wallpaperFindProcess.command = cmd;
         wallpaperFindProcess.running = true;
@@ -585,9 +524,8 @@ Item {
             return;
         }
 
-        const absoluteIndex = currentPage * itemsPerPage + gridIndex;
-        if (absoluteIndex < wallpaperCount) {
-            const filePath = wallpaperPathAt(absoluteIndex);
+        if (gridIndex >= 0 && gridIndex < wallpaperCount) {
+            const filePath = filteredWallpaperPaths[gridIndex];
             if (filePath) {
                 selectedFileName = filePath.substring(filePath.lastIndexOf('/') + 1);
                 return;
@@ -727,438 +665,450 @@ Item {
         }
     }
 
-    Column {
-        id: contentColumn
+    Item {
+        id: contentRoot
         anchors.fill: parent
-        spacing: 0
 
-        Item {
-            width: parent.width
-            height: parent.height - 50
+        GridView {
+            id: gridView
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 50
+            cellWidth: width / 4
+            cellHeight: cellWidth * 9 / 16
+            interactive: true
+            keyNavigationEnabled: true
+            activeFocusOnTab: true
+            focus: root.active
+            highlightFollowsCurrentItem: true
+            highlightMoveDuration: root.enableAnimation ? Theme.shortDuration : 0
+            currentIndex: root.gridIndex
+            cacheBuffer: Math.max(0, height * 1)
+            model: root.filteredWallpaperPaths
+            clip: true
 
-            ListView {
-                id: pager
-                anchors.centerIn: parent
-                width: parent.width - Theme.spacingS
-                height: parent.height - Theme.spacingS
-                orientation: ListView.Vertical
-                snapMode: ListView.SnapOneItem
-                highlightRangeMode: ListView.StrictlyEnforceRange
-                preferredHighlightBegin: 0
-                preferredHighlightEnd: height
-                highlightMoveDuration: root.enableAnimation ? Theme.mediumDuration : 0
-                boundsBehavior: Flickable.StopAtBounds
-                clip: true
-                enabled: root.active
-                interactive: root.active
-                keyNavigationEnabled: false
-                activeFocusOnTab: false
-                focus: false
-                cacheBuffer: Math.max(0, height * root.pagerCachePages)
-                reuseItems: false
-                model: height > 1 ? root.totalPages : 0
+            onCountChanged: {
+            }
 
-                onCountChanged: {
-                    if (count > 0 && currentIndex !== root.currentPage)
-                        currentIndex = root.currentPage;
+            onCurrentIndexChanged: {
+                if (currentIndex >= 0 && currentIndex !== root.gridIndex) {
+                    root.gridIndex = currentIndex;
                 }
+            }
 
-                onCurrentIndexChanged: {
-                    if (!moving) {
-                        return;
-                    }
-                    if (currentIndex >= 0 && currentIndex !== root.currentPage) {
-                        root.currentPage = currentIndex;
+            Connections {
+                target: root
+                function onGridIndexChanged() {
+                    if (gridView.currentIndex !== root.gridIndex) {
+                        gridView.currentIndex = root.gridIndex;
                     }
                 }
-
-                Component.onCompleted: currentIndex = root.currentPage
-
-                Connections {
-                    target: root
-                    function onCurrentPageChanged() {
-                        if (pager.currentIndex !== root.currentPage) {
-                            pager.currentIndex = root.currentPage;
-                        }
-                    }
-                }
-
-                delegate: GridView {
-                    id: pageGrid
-
-                    property int pageIndex: index
-
-                    width: pager.width
-                    height: Math.max(1, pager.height)
-                    cellWidth: width / 4
-                    cellHeight: height / 4
-                    interactive: false
-                    keyNavigationEnabled: false
-                    activeFocusOnTab: false
-                    focus: false
-                    highlightFollowsCurrentItem: true
-                    highlightMoveDuration: root.enableAnimation ? Theme.shortDuration : 0
-                    currentIndex: root.currentPage === pageIndex ? root.gridIndex : -1
-
-                    highlight: Item {
-                        z: 1000
-                        Rectangle {
-                            anchors.fill: parent
-                            anchors.margins: Theme.spacingXS
-                            color: "transparent"
-                            border.width: 3
-                            border.color: Theme.primary
-                            radius: Theme.cornerRadius
-                        }
-                    }
-
-                    reuseItems: true
-                    model: ScriptModel {
-                        values: {
-                            root.gridRevision; // re-evaluate when sort order changes in place
-                            const startIndex = pageGrid.pageIndex * root.itemsPerPage;
-                            const endIndex = Math.min(startIndex + root.itemsPerPage, root.wallpaperCount);
-                            return root.filteredWallpaperPaths.slice(startIndex, endIndex);
-                        }
-                    }
-
-                    onCountChanged: {
-                        if (root.currentPage !== pageIndex || count === 0) {
-                            return;
-                        }
-                        if (root.gridIndex >= count) {
-                            root.gridIndex = count - 1;
-                        }
-                    }
-
-                    delegate: Item {
-                        width: pageGrid.cellWidth
-                        height: pageGrid.cellHeight
-
-                        property string wallpaperPath: modelData || ""
-                        property bool isSelected: getCurrentWallpaper() === modelData
-
-                        Rectangle {
-                            id: wallpaperCard
-                            anchors.fill: parent
-                            anchors.margins: Theme.spacingXS
-                            color: Theme.withAlpha(Theme.surfaceContainerHighest, Theme.popupTransparency)
-                            radius: Theme.cornerRadius
-
-                            Rectangle {
-                                anchors.fill: parent
-                                color: isSelected ? Theme.primaryPressed : Theme.withAlpha(Theme.primaryPressed, 0)
-                                radius: parent.radius
-
-                                Behavior on color {
-                                    ColorAnimation {
-                                        duration: Theme.shortDuration
-                                        easing.type: Theme.standardEasing
-                                    }
-                                }
-                            }
-
-                            ClippingRectangle {
-                                anchors.fill: parent
-                                radius: wallpaperCard.radius
-                                color: "transparent"
-
-                                CachingImage {
-                                    id: thumbnailImage
-                                    anchors.fill: parent
-                                    imagePath: modelData || ""
-                                    maxCacheSize: 256
-                                    animate: false
-                                    opacity: status === Image.Ready ? 1 : 0
-
-                                    Behavior on opacity {
-                                        NumberAnimation {
-                                            duration: Theme.shortDuration
-                                            easing.type: Theme.standardEasing
-                                        }
-                                    }
-                                }
-                            }
-
-                            StateLayer {
-                                anchors.fill: parent
-                                cornerRadius: parent.radius
-                                stateColor: Theme.primary
-                            }
-
-                            MouseArea {
-                                id: wallpaperMouseArea
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-
-                                onClicked: {
-                                    gridIndex = index;
-                                    if (modelData) {
-                                        setCurrentWallpaper(modelData);
-                                    }
-                                }
-                            }
-                        }
+                function onFilteredWallpaperPathsChanged() {
+                    if (gridView.currentIndex >= gridView.count) {
+                        gridView.currentIndex = Math.max(0, gridView.count - 1);
+                        root.gridIndex = gridView.currentIndex;
                     }
                 }
             }
 
-            DankSpinner {
-                anchors.centerIn: parent
-                size: 40
-                visible: wallpaperFolderModel.status === FolderListModel.Loading && wallpaperFolderModel.count === 0
-            }
+            delegate: Item {
+                width: gridView.cellWidth
+                height: gridView.cellHeight
 
-            StyledText {
-                anchors.centerIn: parent
-                visible: wallpaperFolderModel.status === FolderListModel.Ready && root.wallpaperCount === 0
-                text: root.searchQuery.trim() !== "" ? I18n.tr("No results found") : I18n.tr("No wallpapers found\n\nClick the folder icon below to browse")
-                font.pixelSize: 14
-                color: Theme.outline
-                horizontalAlignment: Text.AlignHCenter
-            }
-        }
+                property string wallpaperPath: modelData || ""
+                property bool isSelected: getCurrentWallpaper() === modelData
 
-        Column {
-            width: parent.width
-            height: 50
+                Rectangle {
+                    id: wallpaperCard
+                    anchors.fill: parent
+                    anchors.margins: Theme.spacingXS
+                    color: Theme.withAlpha(Theme.surfaceContainerHighest, Theme.popupTransparency)
+                    radius: Theme.cornerRadius
 
-            Row {
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: controlsRow.width + actionButtons.width + spacing
-                height: 32
-                spacing: Theme.spacingS
+                    Rectangle {
+                        anchors.fill: parent
+                        color: isSelected ? Theme.primaryPressed : Theme.withAlpha(Theme.primaryPressed, 0)
+                        radius: parent.radius
 
-                Row {
-                    id: controlsRow
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: Theme.spacingS
-
-                    DankActionButton {
-                        anchors.verticalCenter: parent.verticalCenter
-                        iconName: "skip_previous"
-                        iconSize: 20
-                        buttonSize: 32
-                        enabled: totalPages > 1
-                        opacity: enabled ? 1.0 : 0.3
-                        tooltipText: I18n.tr("Previous page")
-                        tooltipSide: "top"
-                        onClicked: {
-                            if (totalPages > 1) {
-                                currentPage = (currentPage - 1 + totalPages) % totalPages;
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: Theme.shortDuration
+                                easing.type: Theme.standardEasing
                             }
                         }
                     }
 
-                    StyledText {
-                        id: pageIndicator
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: root.wallpaperCount > 0 ? (root.wallpaperCount === 1 ? I18n.tr("%1 wallpaper  •  %2 / %3").arg(root.wallpaperCount).arg(currentPage + 1).arg(totalPages) : I18n.tr("%1 wallpapers  •  %2 / %3").arg(root.wallpaperCount).arg(currentPage + 1).arg(totalPages)) : I18n.tr("No wallpapers")
-                        font.pixelSize: 14
-                        color: pageIndicatorMouseArea.containsMouse && pageIndicatorMouseArea.enabled ? Theme.primary : Theme.surfaceText
-                        opacity: 0.7
+                    // Image with clipping - inset by border width when selected
+                    ClippingRectangle {
+                        id: imageClip
+                        anchors.fill: parent
+                        anchors.margins: isSelected ? 3 : 0
+                        radius: wallpaperCard.radius - (isSelected ? 3 : 0)
+                        color: "transparent"
 
-                        MouseArea {
-                            id: pageIndicatorMouseArea
+                        CachingImage {
+                            id: thumbnailImage
                             anchors.fill: parent
-                            enabled: totalPages > 1
-                            hoverEnabled: true
-                            cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                            onClicked: {
-                                sortMenu.visible = false;
-                                pageJumpPopup.visible = !pageJumpPopup.visible;
+                            imagePath: modelData || ""
+                            maxCacheSize: 256
+                            animate: false
+                            opacity: status === Image.Ready ? 1 : 0
+
+                            onStatusChanged: {
                             }
-                            onEntered: if (enabled)
-                                pageJumpTooltip.show(I18n.tr("Jump to page"), pageIndicator, 0, 0, "top")
-                            onExited: pageJumpTooltip.hide()
-                        }
 
-                        DankTooltipV2 {
-                            id: pageJumpTooltip
-                        }
-                    }
-
-                    DankActionButton {
-                        anchors.verticalCenter: parent.verticalCenter
-                        iconName: "skip_next"
-                        iconSize: 20
-                        buttonSize: 32
-                        enabled: totalPages > 1
-                        opacity: enabled ? 1.0 : 0.3
-                        tooltipText: I18n.tr("Next page")
-                        tooltipSide: "top"
-                        onClicked: {
-                            if (totalPages > 1) {
-                                currentPage = (currentPage + 1) % totalPages;
+                            Behavior on opacity {
+                                NumberAnimation {
+                                    duration: Theme.shortDuration
+                                    easing.type: Theme.standardEasing
+                                }
                             }
                         }
                     }
-                }
 
-                Row {
-                    id: actionButtons
+                    // Selection border (inset, rendered above image)
+                    Rectangle {
+                        anchors.fill: parent
+                        color: "transparent"
+                        border.color: isSelected ? Theme.primary : "transparent"
+                        border.width: isSelected ? 3 : 0
+                        radius: wallpaperCard.radius
 
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: Theme.spacingS
-
-                    DankActionButton {
-                        id: sortButton
-                        anchors.verticalCenter: parent.verticalCenter
-                        iconName: "filter_list"
-                        iconSize: 20
-                        buttonSize: 32
-                        opacity: 0.7
-                        enabled: wallpaperFolderModel.count > 0
-                        tooltipText: I18n.tr("Sort wallpapers")
-                        tooltipSide: "top"
-                        onClicked: {
-                            pageJumpPopup.visible = false;
-                            sortMenu.visible = !sortMenu.visible;
+                        Behavior on border.width {
+                            NumberAnimation {
+                                duration: Theme.shortDuration
+                                easing.type: Theme.standardEasing
+                            }
+                        }
+                        Behavior on border.color {
+                            ColorAnimation {
+                                duration: Theme.shortDuration
+                                easing.type: Theme.standardEasing
+                            }
                         }
                     }
 
-                    DankActionButton {
-                        id: browseButton
-                        anchors.verticalCenter: parent.verticalCenter
-                        iconName: "folder_open"
-                        iconSize: 20
-                        buttonSize: 32
-                        opacity: 0.7
-                        tooltipText: I18n.tr("Choose wallpaper folder")
-                        tooltipSide: "top"
-                        onClicked: {
-                            wallpaperBrowserLoader.active = true;
-                            wallpaperBrowserLoader.item.open();
-                        }
-                    }
+                    // Check badge in top-right corner
+                    Rectangle {
+                        width: 24
+                        height: 24
+                        anchors.top: parent.top
+                        anchors.right: parent.right
+                        anchors.topMargin: Theme.spacingS
+                        anchors.rightMargin: Theme.spacingS
+                        radius: 12
+                        color: isSelected ? Theme.primary : "transparent"
+                        visible: isSelected
 
-                    Item {
-                        id: searchControl
-
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: root.searchExpanded ? 190 : 32
-                        height: 32
-                        clip: true
-
-                        Behavior on width {
+                        Behavior on opacity {
                             NumberAnimation {
                                 duration: Theme.shortDuration
                                 easing.type: Theme.standardEasing
                             }
                         }
 
-                        DankActionButton {
-                            id: searchToggleButton
-
-                            anchors.left: parent.left
-                            anchors.verticalCenter: parent.verticalCenter
-                            iconName: "search"
-                            iconSize: 20
-                            buttonSize: 32
-                            opacity: root.searchExpanded ? 0 : 0.7
-                            visible: opacity > 0
-                            tooltipText: I18n.tr("Search...")
-                            tooltipSide: "top"
-                            onClicked: root.focusSearch()
-
-                            Behavior on opacity {
-                                NumberAnimation {
-                                    duration: Theme.shortDuration
-                                    easing.type: Theme.standardEasing
-                                }
-                            }
+                        DankIcon {
+                            anchors.centerIn: parent
+                            name: "check"
+                            size: 12
+                            color: Theme.onPrimary
                         }
+                    }
 
-                        DankTextField {
-                            id: wallpaperSearchField
+                    StateLayer {
+                        anchors.fill: parent
+                        cornerRadius: parent.radius
+                        stateColor: Theme.primary
+                    }
 
-                            anchors.fill: parent
-                            topPadding: Theme.spacingXS
-                            bottomPadding: Theme.spacingXS
-                            leftIconName: "search"
-                            leftIconSize: 18
-                            showClearButton: false
-                            rightAccessoryWidth: root.searchQuery !== "" ? 54 : 26
-                            placeholderText: I18n.tr("Search...")
-                            keyForwardTargets: [searchKeyHandler]
-                            opacity: root.searchExpanded ? 1 : 0
-                            visible: opacity > 0
+                    MouseArea {
+                        id: wallpaperMouseArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
 
-                            Behavior on opacity {
-                                NumberAnimation {
-                                    duration: Theme.shortDuration
-                                    easing.type: Theme.standardEasing
-                                }
-                            }
-                        }
-
-                        DankActionButton {
-                            anchors.right: collapseSearchButton.left
-                            anchors.verticalCenter: parent.verticalCenter
-                            z: 2
-                            iconName: "backspace"
-                            iconSize: 16
-                            buttonSize: 28
-                            opacity: root.searchExpanded && root.searchQuery !== "" ? 0.7 : 0
-                            visible: opacity > 0
-                            tooltipText: I18n.tr("Clear")
-                            tooltipSide: "top"
-                            onClicked: root.clearSearch()
-
-                            Behavior on opacity {
-                                NumberAnimation {
-                                    duration: Theme.shortDuration
-                                    easing.type: Theme.standardEasing
-                                }
-                            }
-                        }
-
-                        DankActionButton {
-                            id: collapseSearchButton
-
-                            anchors.right: parent.right
-                            anchors.rightMargin: 2
-                            anchors.verticalCenter: parent.verticalCenter
-                            z: 2
-                            iconName: "close"
-                            iconSize: 16
-                            buttonSize: 28
-                            opacity: root.searchExpanded ? 0.7 : 0
-                            visible: opacity > 0
-                            tooltipText: I18n.tr("Close")
-                            tooltipSide: "top"
-                            onClicked: root.collapseSearch()
-
-                            Behavior on opacity {
-                                NumberAnimation {
-                                    duration: Theme.shortDuration
-                                    easing.type: Theme.standardEasing
-                                }
+                        onClicked: {
+                            gridView.currentIndex = index;
+                            if (modelData) {
+                                setCurrentWallpaper(modelData);
                             }
                         }
                     }
                 }
             }
+        }
 
-            StyledText {
-                width: parent.width
-                height: 18
-                text: selectedFileName
-                font.pixelSize: 12
-                color: Theme.surfaceText
-                opacity: 0.5
-                visible: selectedFileName !== ""
-                elide: Text.ElideMiddle
-                horizontalAlignment: Text.AlignHCenter
+        DankSpinner {
+            anchors.centerIn: gridView
+            size: 40
+            visible: wallpaperFolderModel.status === FolderListModel.Loading && wallpaperFolderModel.count === 0
+        }
+
+        StyledText {
+            anchors.centerIn: gridView
+            visible: wallpaperFolderModel.status === FolderListModel.Ready && root.wallpaperCount === 0
+            text: root.searchQuery.trim() !== "" ? I18n.tr("No results found") : I18n.tr("No wallpapers found\n\nClick the folder icon below to browse")
+            font.pixelSize: 14
+            color: Theme.outline
+            horizontalAlignment: Text.AlignHCenter
+        }
+    }
+
+    Column {
+        id: bottomToolbar
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: 50
+        spacing: Theme.spacingXS
+
+        StyledText {
+            width: parent.width
+            height: 18
+            text: selectedFileName
+            font.pixelSize: 12
+            color: Theme.surfaceText
+            opacity: 0.5
+            visible: selectedFileName !== ""
+            elide: Text.ElideMiddle
+            horizontalAlignment: Text.AlignHCenter
+        }
+
+        Row {
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: controlsRow.width + actionButtons.width + spacing
+            height: 32
+            spacing: Theme.spacingS
+
+            Row {
+                id: controlsRow
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: Theme.spacingS
+
+                DankActionButton {
+                    anchors.verticalCenter: parent.verticalCenter
+                    iconName: "skip_previous"
+                    iconSize: 20
+                    buttonSize: 32
+                    enabled: wallpaperCount > 1
+                    opacity: enabled ? 1.0 : 0.3
+                    tooltipText: I18n.tr("Previous wallpaper")
+                    tooltipSide: "top"
+                    onClicked: {
+                        goToPrevCell();
+                    }
+                }
+
+                StyledText {
+                    id: pageIndicator
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: root.wallpaperCount > 0 ? (root.wallpaperCount === 1 ? I18n.tr("%1 wallpaper  •  %2 of %3").arg(root.wallpaperCount).arg(root.gridIndex + 1).arg(root.wallpaperCount) : I18n.tr("%1 wallpapers  •  %2 of %3").arg(root.wallpaperCount).arg(root.gridIndex + 1).arg(root.wallpaperCount)) : I18n.tr("No wallpapers")
+                    font.pixelSize: 14
+                    color: pageIndicatorMouseArea.containsMouse && pageIndicatorMouseArea.enabled ? Theme.primary : Theme.surfaceText
+                    opacity: 0.7
+
+                    MouseArea {
+                        id: pageIndicatorMouseArea
+                        anchors.fill: parent
+                        enabled: wallpaperCount > 1
+                        hoverEnabled: true
+                        cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        onClicked: {
+                            sortMenu.visible = false;
+                            pageJumpPopup.visible = !pageJumpPopup.visible;
+                        }
+                        onEntered: if (enabled)
+                            pageJumpTooltip.show(I18n.tr("Jump to wallpaper"), pageIndicator, 0, 0, "top")
+                        onExited: pageJumpTooltip.hide()
+                    }
+
+                    DankTooltipV2 {
+                        id: pageJumpTooltip
+                    }
+                }
+
+                DankActionButton {
+                    anchors.verticalCenter: parent.verticalCenter
+                    iconName: "skip_next"
+                    iconSize: 20
+                    buttonSize: 32
+                    enabled: wallpaperCount > 1
+                    opacity: enabled ? 1.0 : 0.3
+                    tooltipText: I18n.tr("Next wallpaper")
+                    tooltipSide: "top"
+                    onClicked: {
+                        goToNextCell();
+                    }
+                }
             }
+
+            Row {
+                id: actionButtons
+
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: Theme.spacingS
+
+                DankActionButton {
+                    id: sortButton
+                    anchors.verticalCenter: parent.verticalCenter
+                    iconName: "filter_list"
+                    iconSize: 20
+                    buttonSize: 32
+                    opacity: 0.7
+                    enabled: wallpaperFolderModel.count > 0
+                    tooltipText: I18n.tr("Sort wallpapers")
+                    tooltipSide: "top"
+                    onClicked: {
+                        pageJumpPopup.visible = false;
+                        sortMenu.visible = !sortMenu.visible;
+                    }
+                }
+
+                DankActionButton {
+                    id: browseButton
+                    anchors.verticalCenter: parent.verticalCenter
+                    iconName: "folder_open"
+                    iconSize: 20
+                    buttonSize: 32
+                    opacity: 0.7
+                    tooltipText: I18n.tr("Choose wallpaper folder")
+                    tooltipSide: "top"
+                    onClicked: {
+                        wallpaperBrowserLoader.active = true;
+                        wallpaperBrowserLoader.item.open();
+                    }
+                }
+
+                Item {
+                    id: searchControl
+
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: root.searchExpanded ? 190 : 32
+                    height: 32
+                    clip: true
+
+                    Behavior on width {
+                        NumberAnimation {
+                            duration: Theme.shortDuration
+                            easing.type: Theme.standardEasing
+                        }
+                    }
+
+                    DankActionButton {
+                        id: searchToggleButton
+
+                        anchors.left: parent.left
+                        anchors.verticalCenter: parent.verticalCenter
+                        iconName: "search"
+                        iconSize: 20
+                        buttonSize: 32
+                        opacity: root.searchExpanded ? 0 : 0.7
+                        visible: opacity > 0
+                        tooltipText: I18n.tr("Search...")
+                        tooltipSide: "top"
+                        onClicked: root.focusSearch()
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: Theme.shortDuration
+                                easing.type: Theme.standardEasing
+                            }
+                        }
+                    }
+
+                    DankTextField {
+                        id: wallpaperSearchField
+
+                        anchors.fill: parent
+                        topPadding: Theme.spacingXS
+                        bottomPadding: Theme.spacingXS
+                        leftIconName: "search"
+                        leftIconSize: 18
+                        showClearButton: false
+                        rightAccessoryWidth: root.searchQuery !== "" ? 54 : 26
+                        placeholderText: I18n.tr("Search...")
+                        keyForwardTargets: [searchKeyHandler]
+                        opacity: root.searchExpanded ? 1 : 0
+                        visible: opacity > 0
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: Theme.shortDuration
+                                easing.type: Theme.standardEasing
+                            }
+                        }
+                    }
+
+                    DankActionButton {
+                        anchors.right: collapseSearchButton.left
+                        anchors.verticalCenter: parent.verticalCenter
+                        z: 2
+                        iconName: "backspace"
+                        iconSize: 16
+                        buttonSize: 28
+                        opacity: root.searchExpanded && root.searchQuery !== "" ? 0.7 : 0
+                        visible: opacity > 0
+                        tooltipText: I18n.tr("Clear")
+                        tooltipSide: "top"
+                        onClicked: root.clearSearch()
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: Theme.shortDuration
+                                easing.type: Theme.standardEasing
+                            }
+                        }
+                    }
+
+                    DankActionButton {
+                        id: collapseSearchButton
+
+                        anchors.right: parent.right
+                        anchors.rightMargin: 2
+                        anchors.verticalCenter: parent.verticalCenter
+                        z: 2
+                        iconName: "close"
+                        iconSize: 16
+                        buttonSize: 28
+                        opacity: root.searchExpanded ? 0.7 : 0
+                        visible: opacity > 0
+                        tooltipText: I18n.tr("Close")
+                        tooltipSide: "top"
+                        onClicked: root.collapseSearch()
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: Theme.shortDuration
+                                easing.type: Theme.standardEasing
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        DankSpinner {
+            anchors.centerIn: gridView
+            size: 40
+            visible: wallpaperFolderModel.status === FolderListModel.Loading && wallpaperFolderModel.count === 0
+        }
+
+        StyledText {
+            anchors.centerIn: gridView
+            visible: wallpaperFolderModel.status === FolderListModel.Ready && root.wallpaperCount === 0
+            text: root.searchQuery.trim() !== "" ? I18n.tr("No results found") : I18n.tr("No wallpapers found\n\nClick the folder icon below to browse")
+            font.pixelSize: 14
+            color: Theme.outline
+            horizontalAlignment: Text.AlignHCenter
         }
     }
 
     function jumpToPage(value) {
         const n = parseInt(value);
         if (!isNaN(n)) {
-            currentPage = Math.max(0, Math.min(totalPages - 1, n - 1));
+            gridIndex = Math.max(0, Math.min(wallpaperCount - 1, n - 1));
         }
         pageJumpPopup.visible = false;
     }
@@ -1182,7 +1132,7 @@ Item {
         anchors.rightMargin: Theme.spacingM
         anchors.bottomMargin: 56
         radius: Theme.cornerRadius
-        sourceItem: contentColumn
+        sourceItem: contentRoot
     }
 
     FileBrowserSortMenu {
@@ -1214,7 +1164,7 @@ Item {
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 56
         radius: Theme.cornerRadius
-        sourceItem: contentColumn
+        sourceItem: contentRoot
     }
 
     StyledRect {
@@ -1233,7 +1183,7 @@ Item {
 
         onVisibleChanged: {
             if (visible) {
-                pageJumpField.text = (root.currentPage + 1).toString();
+                pageJumpField.text = (root.gridIndex + 1).toString();
                 pageJumpField.forceActiveFocus();
                 pageJumpField.selectAll();
             }
@@ -1248,7 +1198,7 @@ Item {
             spacing: Theme.spacingXS
 
             StyledText {
-                text: I18n.tr("Jump to page (1 - %1)").arg(root.totalPages)
+                text: I18n.tr("Jump to wallpaper (1 - %1)").arg(root.wallpaperCount)
                 font.pixelSize: Theme.fontSizeSmall
                 color: Theme.surfaceTextMedium
                 font.weight: Font.Medium
@@ -1257,13 +1207,13 @@ Item {
             DankTextField {
                 id: pageJumpField
                 width: parent.width
-                placeholderText: "1 - " + root.totalPages
+                placeholderText: "1 - " + root.wallpaperCount
                 maximumLength: 6
                 topPadding: Theme.spacingS
                 bottomPadding: Theme.spacingS
                 validator: IntValidator {
                     bottom: 1
-                    top: root.totalPages
+                    top: root.wallpaperCount
                 }
                 onAccepted: root.jumpToPage(text)
             }

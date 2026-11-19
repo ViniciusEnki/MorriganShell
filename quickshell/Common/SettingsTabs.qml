@@ -8,16 +8,16 @@ import qs.Services
 Singleton {
     readonly property var structure: [
         {
+            "id": "wallpaper",
+            "text": I18n.tr("Wallpaper"),
+            "icon": "wallpaper",
+            "tabIndex": 0
+        },
+        {
             "id": "personalization",
             "text": I18n.tr("Personalization"),
             "icon": "palette",
             "children": [
-                {
-                    "id": "wallpaper",
-                    "text": I18n.tr("Wallpaper"),
-                    "icon": "wallpaper",
-                    "tabIndex": 0
-                },
                 {
                     "id": "theme",
                     "text": I18n.tr("Theme & Colors"),

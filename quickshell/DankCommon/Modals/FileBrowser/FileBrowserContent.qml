@@ -336,8 +336,11 @@ readonly property string _componentVersion: "v20241115c"
         showDotAndDotDot: false
         showHidden: root.showHiddenFiles
         caseSensitive: false
-        nameFilters: fileExtensions
-        showFiles: true
+        // When folderMode is true, don't filter directories by file extensions.
+        // nameFilters applies to both files and directories in FolderListModel.
+        // Use ["*"] to match all names (including those without dots).
+        nameFilters: folderMode ? ["*"] : fileExtensions
+        showFiles: !folderMode  // In folder mode, only show directories
         showDirs: true
         folder: encodeFileUrl(currentPath || homeDir)
         sortField: {

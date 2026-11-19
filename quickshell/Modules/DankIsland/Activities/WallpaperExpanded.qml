@@ -12,7 +12,6 @@ DashTabFace {
     tabComponent: Component {
         WallpaperTab {
             active: true
-            pagerCachePages: 0
             targetScreen: root.effectiveScreen
             parentPopout: hostContract
         }
