@@ -8,14 +8,85 @@ import qs.Services
 Singleton {
     readonly property var structure: [
         {
-            "id": "wallpaper",
-            "text": I18n.tr("Wallpaper"),
-            "icon": "wallpaper",
-            "tabIndex": 0
+            "id": "wifi",
+            "text": I18n.tr("Wifi"),
+            "icon": "wifi",
+            "tabIndex": 40,
+            "dmsOnly": true
         },
         {
-            "id": "personalization",
-            "text": I18n.tr("Personalization"),
+            "id": "bluetooth",
+            "text": I18n.tr("Bluetooth"),
+            "icon": "bluetooth",
+            "tabIndex": 28
+        },
+        {
+            "id": "network",
+            "text": I18n.tr("Network"),
+            "icon": "lan",
+            "dmsOnly": true,
+            "tabIndex": 7
+        },
+        {
+            "id": "battery",
+            "text": I18n.tr("Battery"),
+            "icon": "battery_charging_full",
+            "tabIndex": 42
+        },
+        {
+            "id": "divider1",
+            "separator": true
+        },
+        {
+            "id": "general",
+            "text": I18n.tr("General"),
+            "icon": "settings",
+            "collapsedByDefault": false,
+            "children": [
+                {
+                    "id": "default_apps",
+                    "text": I18n.tr("Default Apps"),
+                    "icon": "star",
+                    "tabIndex": 34
+                },
+                {
+                    "id": "running_apps",
+                    "text": I18n.tr("Running Apps"),
+                    "icon": "app_registration",
+                    "tabIndex": 19,
+                    "hyprlandNiriOnly": true
+                },
+                {
+                    "id": "window_rules",
+                    "text": I18n.tr("Window Rules"),
+                    "icon": "select_window",
+                    "tabIndex": 38,
+                    "windowRulesCapable": true
+                },
+                {
+                    "id": "locale",
+                    "text": I18n.tr("Locale"),
+                    "icon": "language",
+                    "tabIndex": 30
+                },
+                {
+                    "id": "updater",
+                    "text": I18n.tr("System Updater"),
+                    "icon": "refresh",
+                    "tabIndex": 20,
+                    "updaterOnly": true
+                }
+            ]
+        },
+        {
+            "id": "accessibility",
+            "text": I18n.tr("Accessibility"),
+            "icon": "accessibility",
+            "tabIndex": 49
+        },
+        {
+            "id": "appearance",
+            "text": I18n.tr("Appearance"),
             "icon": "palette",
             "children": [
                 {
@@ -54,7 +125,7 @@ Singleton {
         },
         {
             "id": "topbar",
-            "text": I18n.tr("Bar"),
+            "text": I18n.tr("TopBar"),
             "icon": "toolbar",
             "children": [
                 {
@@ -94,77 +165,24 @@ Singleton {
                     "icon": "view_in_ar",
                     "tabIndex": 46,
                     "islandOnly": true
-                }
-            ]
-        },
-        {
-            "id": "workspaces_widgets",
-            "text": I18n.tr("Widgets & Notifications"),
-            "icon": "dashboard",
-            "collapsedByDefault": true,
-            "children": [
+                },
                 {
-                    "id": "dank_dash",
+                    "id": "dashboard",
                     "text": I18n.tr("Dashboard"),
                     "icon": "space_dashboard",
                     "tabIndex": 43
-                },
-                {
-                    "id": "media_player",
-                    "text": I18n.tr("Media Player"),
-                    "icon": "music_note",
-                    "tabIndex": 16
-                },
-                {
-                    "id": "notifications",
-                    "text": I18n.tr("Notifications"),
-                    "icon": "notifications",
-                    "tabIndex": 17
-                },
-                {
-                    "id": "osd",
-                    "text": I18n.tr("On-screen Displays"),
-                    "icon": "tune",
-                    "tabIndex": 18
-                },
-                {
-                    "id": "desktop_widgets",
-                    "text": I18n.tr("Desktop Widgets"),
-                    "icon": "widgets",
-                    "tabIndex": 27
                 }
             ]
         },
         {
-            "id": "dock_launcher",
-            "text": I18n.tr("Dock & Launcher"),
-            "icon": "shelf_auto_hide",
-            "collapsedByDefault": true,
-            "children": [
-                {
-                    "id": "dock",
-                    "text": I18n.tr("Dock"),
-                    "icon": "dock_to_bottom",
-                    "tabIndex": 5
-                },
-                {
-                    "id": "launcher",
-                    "text": I18n.tr("Launcher"),
-                    "icon": "grid_view",
-                    "tabIndex": 9
-                }
-            ]
+            "id": "desktop_dock",
+            "text": I18n.tr("Dock"),
+            "icon": "dock_to_bottom",
+            "tabIndex": 5
         },
         {
-            "id": "keybinds",
-            "text": I18n.tr("Keyboard Shortcuts"),
-            "icon": "keyboard",
-            "tabIndex": 2,
-            "shortcutsOnly": true
-        },
-        {
-            "id": "displays",
-            "text": I18n.tr("Displays"),
+            "id": "display",
+            "text": I18n.tr("Display"),
             "icon": "monitor",
             "collapsedByDefault": true,
             "children": [
@@ -189,43 +207,120 @@ Singleton {
             ]
         },
         {
-            "id": "network",
-            "text": I18n.tr("Network"),
-            "icon": "wifi",
-            "dmsOnly": true,
+            "id": "spotlight",
+            "text": I18n.tr("Spotlight"),
+            "icon": "grid_view",
+            "tabIndex": 9
+        },
+        {
+            "id": "wallpaper",
+            "text": I18n.tr("Wallpaper"),
+            "icon": "wallpaper",
+            "tabIndex": 0
+        },
+        {
+            "id": "divider_after_wallpaper",
+            "separator": true
+        },
+        {
+            "id": "notification",
+            "text": I18n.tr("Notification"),
+            "icon": "notifications",
+            "tabIndex": 17
+        },
+        {
+            "id": "sound",
+            "text": I18n.tr("Sound"),
+            "icon": "volume_up",
+            "tabIndex": 29
+        },
+        {
+            "id": "focus",
+            "text": I18n.tr("Focus"),
+            "icon": "do_not_disturb",
+            "tabIndex": 50
+        },
+        {
+            "id": "divider_after_focus",
+            "separator": true
+        },
+        {
+            "id": "lock_screen",
+            "text": I18n.tr("Lock Screen"),
+            "icon": "lock",
+            "tabIndex": 11
+        },
+        {
+            "id": "power_sleep",
+            "text": I18n.tr("Power & Sleep"),
+            "icon": "power_settings_new",
+            "tabIndex": 21
+        },
+        {
+            "id": "privacy_security",
+            "text": I18n.tr("Privacy & Security"),
+            "icon": "security",
+            "tabIndex": 52
+        },
+        {
+            "id": "users_groups",
+            "text": I18n.tr("Users & Groups"),
+            "icon": "manage_accounts",
+            "tabIndex": 35
+        },
+        {
+            "id": "divider_after_users_groups",
+            "separator": true
+        },
+        {
+            "id": "about",
+            "text": I18n.tr("About"),
+            "icon": "info",
+            "tabIndex": 13
+        },
+        {
+            "id": "divider_after_about",
+            "separator": true
+        },
+        {
+            "id": "widgets_notifications",
+            "text": I18n.tr("Widgets & Notifications"),
+            "icon": "dashboard",
+            "collapsedByDefault": true,
             "children": [
                 {
-                    "id": "network_status",
-                    "text": I18n.tr("Status"),
-                    "icon": "lan",
-                    "tabIndex": 7
+                    "id": "media_player",
+                    "text": I18n.tr("Media Player"),
+                    "icon": "music_note",
+                    "tabIndex": 16
                 },
                 {
-                    "id": "network_ethernet",
-                    "text": I18n.tr("Ethernet"),
-                    "icon": "settings_ethernet",
-                    "tabIndex": 39
+                    "id": "osd",
+                    "text": I18n.tr("On-screen Displays"),
+                    "icon": "tune",
+                    "tabIndex": 18
                 },
                 {
-                    "id": "network_wifi",
-                    "text": I18n.tr("WiFi"),
-                    "icon": "wifi",
-                    "tabIndex": 40
-                },
-                {
-                    "id": "network_cellular",
-                    "text": I18n.tr("Cellular"),
-                    "icon": "network_cell",
-                    "tabIndex": 47,
-                    "cellularOnly": true
-                },
-                {
-                    "id": "network_vpn",
-                    "text": I18n.tr("VPN"),
-                    "icon": "vpn_key",
-                    "tabIndex": 41
+                    "id": "desktop_widgets",
+                    "text": I18n.tr("Desktop Widgets"),
+                    "icon": "widgets",
+                    "tabIndex": 27
                 }
             ]
+        },
+        {
+            "id": "dock_launcher",
+            "text": I18n.tr("Dock & Launcher"),
+            "icon": "shelf_auto_hide",
+            "collapsedByDefault": true,
+            "children": []
+        },
+        {
+            "id": "keybinds",
+            "text": I18n.tr("Keyboard Shortcuts"),
+            "icon": "keyboard",
+            "tabIndex": 2,
+            "shortcutsOnly": true
         },
         {
             "id": "applications",
@@ -234,31 +329,11 @@ Singleton {
             "collapsedByDefault": true,
             "children": [
                 {
-                    "id": "default_apps",
-                    "text": I18n.tr("Default Apps"),
-                    "icon": "star",
-                    "tabIndex": 34
-                },
-                {
-                    "id": "running_apps",
-                    "text": I18n.tr("Running Apps"),
-                    "icon": "app_registration",
-                    "tabIndex": 19,
-                    "hyprlandNiriOnly": true
-                },
-                {
                     "id": "autostart",
                     "text": I18n.tr("Autostart Apps"),
                     "icon": "line_start",
                     "tabIndex": 36,
                     "autostartOnly": true
-                },
-                {
-                    "id": "window_rules",
-                    "text": I18n.tr("Window Rules"),
-                    "icon": "select_window",
-                    "tabIndex": 38,
-                    "windowRulesCapable": true
                 }
             ]
         },
@@ -268,12 +343,6 @@ Singleton {
             "icon": "memory",
             "collapsedByDefault": true,
             "children": [
-                {
-                    "id": "audio",
-                    "text": I18n.tr("Audio"),
-                    "icon": "headphones",
-                    "tabIndex": 29
-                },
                 {
                     "id": "mouse_touchpad",
                     "text": I18n.tr("Mouse & Touchpad"),
@@ -287,12 +356,6 @@ Singleton {
                     "icon": "keyboard",
                     "tabIndex": 45,
                     "niriOnly": true
-                },
-                {
-                    "id": "locale",
-                    "text": I18n.tr("Locale"),
-                    "icon": "language",
-                    "tabIndex": 30
                 },
                 {
                     "id": "clipboard",
@@ -313,19 +376,6 @@ Singleton {
                     "text": I18n.tr("Multiplexers"),
                     "icon": "terminal",
                     "tabIndex": 32
-                },
-                {
-                    "id": "updater",
-                    "text": I18n.tr("System Updater"),
-                    "icon": "refresh",
-                    "tabIndex": 20,
-                    "updaterOnly": true
-                },
-                {
-                    "id": "users",
-                    "text": I18n.tr("Users"),
-                    "icon": "manage_accounts",
-                    "tabIndex": 35
                 }
             ]
         },
@@ -336,29 +386,11 @@ Singleton {
             "collapsedByDefault": true,
             "children": [
                 {
-                    "id": "battery",
-                    "text": I18n.tr("Battery"),
-                    "icon": "battery_charging_full",
-                    "tabIndex": 42
-                },
-                {
-                    "id": "lock_screen",
-                    "text": I18n.tr("Lock Screen"),
-                    "icon": "lock",
-                    "tabIndex": 11
-                },
-                {
                     "id": "greeter",
                     "text": I18n.tr("Greeter"),
                     "icon": "login",
                     "tabIndex": 31,
                     "greeterOnly": true
-                },
-                {
-                    "id": "power_sleep",
-                    "text": I18n.tr("Power & Sleep"),
-                    "icon": "power_settings_new",
-                    "tabIndex": 21
                 }
             ]
         },
@@ -367,16 +399,6 @@ Singleton {
             "text": I18n.tr("Plugins"),
             "icon": "extension",
             "tabIndex": 12
-        },
-        {
-            "id": "separator",
-            "separator": true
-        },
-        {
-            "id": "about",
-            "text": I18n.tr("About"),
-            "icon": "info",
-            "tabIndex": 13
         }
     ]
 }
