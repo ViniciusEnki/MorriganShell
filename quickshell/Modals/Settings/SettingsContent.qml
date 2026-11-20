@@ -252,22 +252,7 @@ FocusScope {
             visible: active
             focus: active
 
-            sourceComponent: NetworkStatusTab {}
-
-            onActiveChanged: {
-                if (active && item)
-                    Qt.callLater(() => item.forceActiveFocus());
-            }
-        }
-
-        Loader {
-            id: networkEthernetLoader
-            anchors.fill: parent
-            active: root.currentIndex === 39
-            visible: active
-            focus: active
-
-            sourceComponent: NetworkEthernetTab {}
+            sourceComponent: NetworkTab {}
 
             onActiveChanged: {
                 if (active && item)
@@ -291,36 +276,6 @@ FocusScope {
         }
 
         Loader {
-            id: networkVpnLoader
-            anchors.fill: parent
-            active: root.currentIndex === 41
-            visible: active
-            focus: active
-
-            sourceComponent: NetworkVpnTab {}
-
-            onActiveChanged: {
-                if (active && item)
-                    Qt.callLater(() => item.forceActiveFocus());
-            }
-        }
-
-        Loader {
-            id: networkCellularLoader
-            anchors.fill: parent
-            active: root.currentIndex === 47
-            visible: active
-            focus: active
-
-            sourceComponent: NetworkCellularTab {}
-
-            onActiveChanged: {
-                if (active && item)
-                    Qt.callLater(() => item.forceActiveFocus());
-            }
-        }
-
-        Loader {
             id: printerLoader
             anchors.fill: parent
             active: root.currentIndex === 8
@@ -328,6 +283,21 @@ FocusScope {
             focus: active
 
             sourceComponent: PrinterTab {}
+
+            onActiveChanged: {
+                if (active && item)
+                    Qt.callLater(() => item.forceActiveFocus());
+            }
+        }
+
+        Loader {
+            id: bluetoothLoader
+            anchors.fill: parent
+            active: root.currentIndex === 28
+            visible: active
+            focus: active
+
+            sourceComponent: BluetoothTab {}
 
             onActiveChanged: {
                 if (active && item)
@@ -799,6 +769,66 @@ FocusScope {
             focus: active
 
             sourceComponent: KeyboardTab {}
+
+            onActiveChanged: {
+                if (active && item)
+                    Qt.callLater(() => item.forceActiveFocus());
+            }
+        }
+
+        Loader {
+            id: generalLoader
+            anchors.fill: parent
+            active: root.currentIndex === 48
+            visible: active
+            focus: active
+
+            sourceComponent: GeneralTab {}
+
+            onActiveChanged: {
+                if (active && item)
+                    Qt.callLater(() => item.forceActiveFocus());
+            }
+        }
+
+        Loader {
+            id: accessibilityLoader
+            anchors.fill: parent
+            active: root.currentIndex === 49
+            visible: active
+            focus: active
+
+            sourceComponent: AccessibilityTab {}
+
+            onActiveChanged: {
+                if (active && item)
+                    Qt.callLater(() => item.forceActiveFocus());
+            }
+        }
+
+        Loader {
+            id: focusLoader
+            anchors.fill: parent
+            active: root.currentIndex === 50
+            visible: active
+            focus: active
+
+            sourceComponent: FocusTab {}
+
+            onActiveChanged: {
+                if (active && item)
+                    Qt.callLater(() => item.forceActiveFocus());
+            }
+        }
+
+        Loader {
+            id: privacySecurityLoader
+            anchors.fill: parent
+            active: root.currentIndex === 52
+            visible: active
+            focus: active
+
+            sourceComponent: PrivacySecurityTab {}
 
             onActiveChanged: {
                 if (active && item)

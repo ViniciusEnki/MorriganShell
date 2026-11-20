@@ -295,6 +295,24 @@ Rectangle {
         var normalized = name.toLowerCase().replace(/[_\-\s]/g, "");
         if (normalized === "compositor")
             normalized = "workspaces";
+        else if (normalized === "networkwifi")
+            normalized = "wifi";
+        else if (normalized === "dock")
+            normalized = "desktopdock";
+        else if (normalized === "notifications")
+            normalized = "notification";
+        else if (normalized === "launcher")
+            normalized = "spotlight";
+        else if (normalized === "audio")
+            normalized = "sound";
+        else if (normalized === "displays")
+            normalized = "display";
+        else if (normalized === "personalization")
+            normalized = "appearance";
+        else if (normalized === "bar")
+            normalized = "topbar";
+        else if (normalized === "networkstatus" || normalized === "networkethernet" || normalized === "networkvpn" || normalized === "networkcellular")
+            normalized = "network";
 
         for (var i = 0; i < categoryStructure.length; i++) {
             var cat = categoryStructure[i];
