@@ -11,6 +11,7 @@ Singleton {
             "id": "wifi",
             "text": I18n.tr("Wifi"),
             "icon": "wifi",
+            "svgIcon": "preferences-wifi.svg",
             "tabIndex": 40,
             "dmsOnly": true
         },
@@ -18,12 +19,14 @@ Singleton {
             "id": "bluetooth",
             "text": I18n.tr("Bluetooth"),
             "icon": "bluetooth",
+            "svgIcon": "preferences-bluetooth.svg",
             "tabIndex": 28
         },
         {
             "id": "network",
             "text": I18n.tr("Network"),
             "icon": "lan",
+            "svgIcon": "preferences-network.svg",
             "dmsOnly": true,
             "tabIndex": 7
         },
@@ -31,6 +34,7 @@ Singleton {
             "id": "battery",
             "text": I18n.tr("Battery"),
             "icon": "battery_charging_full",
+            "svgIcon": "preferences-battery.svg",
             "tabIndex": 42
         },
         {
@@ -41,12 +45,14 @@ Singleton {
             "id": "general",
             "text": I18n.tr("General"),
             "icon": "settings",
+            "svgIcon": "preferences-general.svg",
             "collapsedByDefault": false,
             "children": [
                 {
                     "id": "default_apps",
                     "text": I18n.tr("Default Apps"),
                     "icon": "star",
+                    "svgIcon": "preferences-default-applications.svg",
                     "tabIndex": 34
                 },
                 {
@@ -67,6 +73,7 @@ Singleton {
                     "id": "locale",
                     "text": I18n.tr("Locale"),
                     "icon": "language",
+                    "svgIcon": "preferences-locale.svg",
                     "tabIndex": 30
                 },
                 {
@@ -75,6 +82,26 @@ Singleton {
                     "icon": "refresh",
                     "tabIndex": 20,
                     "updaterOnly": true
+                },
+                {
+                    "id": "plugins",
+                    "text": I18n.tr("Plugins"),
+                    "icon": "extension",
+                    "svgIcon": "preferences-plugins.svg",
+                    "tabIndex": 12
+                },
+                {
+                    "id": "about",
+                    "text": I18n.tr("About"),
+                    "icon": "info",
+                    "svgIcon": "preferences-about.svg",
+                    "tabIndex": 13
+                },
+                {
+                    "id": "multiplexers",
+                    "text": I18n.tr("Multiplexers"),
+                    "icon": "terminal",
+                    "tabIndex": 32
                 }
             ]
         },
@@ -82,12 +109,14 @@ Singleton {
             "id": "accessibility",
             "text": I18n.tr("Accessibility"),
             "icon": "accessibility",
+            "svgIcon": "preferences-accessibility.svg",
             "tabIndex": 49
         },
         {
             "id": "appearance",
             "text": I18n.tr("Appearance"),
             "icon": "palette",
+            "svgIcon": "preferences-appearance.svg",
             "children": [
                 {
                     "id": "theme",
@@ -127,6 +156,7 @@ Singleton {
             "id": "topbar",
             "text": I18n.tr("TopBar"),
             "icon": "toolbar",
+            "svgIcon": "preferences-topbar.svg",
             "children": [
                 {
                     "id": "topbar_appearance",
@@ -178,12 +208,14 @@ Singleton {
             "id": "desktop_dock",
             "text": I18n.tr("Dock"),
             "icon": "dock_to_bottom",
+            "svgIcon": "preferences-dock.svg",
             "tabIndex": 5
         },
         {
             "id": "display",
             "text": I18n.tr("Display"),
             "icon": "monitor",
+            "svgIcon": "preferences-display.svg",
             "collapsedByDefault": true,
             "children": [
                 {
@@ -210,12 +242,14 @@ Singleton {
             "id": "spotlight",
             "text": I18n.tr("Spotlight"),
             "icon": "grid_view",
+            "svgIcon": "preferences-spotlight.svg",
             "tabIndex": 9
         },
         {
             "id": "wallpaper",
             "text": I18n.tr("Wallpaper"),
             "icon": "wallpaper",
+            "svgIcon": "preferences-wallpaper.svg",
             "tabIndex": 0
         },
         {
@@ -226,19 +260,29 @@ Singleton {
             "id": "notification",
             "text": I18n.tr("Notification"),
             "icon": "notifications",
+            "svgIcon": "preferences-notification.svg",
             "tabIndex": 17
         },
         {
             "id": "sound",
             "text": I18n.tr("Sound"),
             "icon": "volume_up",
+            "svgIcon": "preferences-sound.svg",
             "tabIndex": 29
         },
         {
             "id": "focus",
             "text": I18n.tr("Focus"),
             "icon": "do_not_disturb",
+            "svgIcon": "preferences-focus.svg",
             "tabIndex": 50
+        },
+        {
+            "id": "media_player",
+            "text": I18n.tr("Media Player"),
+            "icon": "music_note",
+            "svgIcon": "preferences-media-player.svg",
+            "tabIndex": 16
         },
         {
             "id": "divider_after_focus",
@@ -248,38 +292,32 @@ Singleton {
             "id": "lock_screen",
             "text": I18n.tr("Lock Screen"),
             "icon": "lock",
+            "svgIcon": "preferences-lockscreen.svg",
             "tabIndex": 11
         },
         {
             "id": "power_sleep",
             "text": I18n.tr("Power & Sleep"),
             "icon": "power_settings_new",
+            "svgIcon": "preferences-power&sleep.svg",
             "tabIndex": 21
         },
         {
             "id": "privacy_security",
             "text": I18n.tr("Privacy & Security"),
             "icon": "security",
+            "svgIcon": "preferences-privacy&security.svg",
             "tabIndex": 52
         },
         {
             "id": "users_groups",
             "text": I18n.tr("Users & Groups"),
             "icon": "manage_accounts",
+            "svgIcon": "preferences-users.svg",
             "tabIndex": 35
         },
         {
             "id": "divider_after_users_groups",
-            "separator": true
-        },
-        {
-            "id": "about",
-            "text": I18n.tr("About"),
-            "icon": "info",
-            "tabIndex": 13
-        },
-        {
-            "id": "divider_after_about",
             "separator": true
         },
         {
@@ -289,15 +327,10 @@ Singleton {
             "collapsedByDefault": true,
             "children": [
                 {
-                    "id": "media_player",
-                    "text": I18n.tr("Media Player"),
-                    "icon": "music_note",
-                    "tabIndex": 16
-                },
-                {
                     "id": "osd",
                     "text": I18n.tr("On-screen Displays"),
                     "icon": "tune",
+                    "svgIcon": "preferencs-OSD.svg",
                     "tabIndex": 18
                 },
                 {
@@ -361,6 +394,7 @@ Singleton {
                     "id": "clipboard",
                     "text": I18n.tr("Clipboard"),
                     "icon": "content_paste",
+                    "svgIcon": "preferences-clipboard.svg",
                     "tabIndex": 23,
                     "clipboardOnly": true
                 },
@@ -370,12 +404,6 @@ Singleton {
                     "icon": "print",
                     "tabIndex": 8,
                     "cupsOnly": true
-                },
-                {
-                    "id": "multiplexers",
-                    "text": I18n.tr("Multiplexers"),
-                    "icon": "terminal",
-                    "tabIndex": 32
                 }
             ]
         },
@@ -393,12 +421,6 @@ Singleton {
                     "greeterOnly": true
                 }
             ]
-        },
-        {
-            "id": "plugins",
-            "text": I18n.tr("Plugins"),
-            "icon": "extension",
-            "tabIndex": 12
         }
     ]
 }

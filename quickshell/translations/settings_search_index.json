@@ -6544,7 +6544,7 @@
     "section": "_tab_12",
     "label": "Plugins",
     "tabIndex": 12,
-    "category": "Plugins",
+    "category": "General",
     "keywords": [
       "addon",
       "addons",
@@ -6559,7 +6559,7 @@
     "section": "_tab_13",
     "label": "About",
     "tabIndex": 13,
-    "category": "About",
+    "category": "General",
     "keywords": [
       "about",
       "credits",
@@ -7662,23 +7662,19 @@
   },
   {
     "section": "_tab_16",
-    "label": "Widgets & Notifications",
+    "label": "Media Player",
     "tabIndex": 16,
-    "category": "Widgets & Notifications",
+    "category": "Media Player",
     "keywords": [
-      "alert",
-      "alerts",
-      "components",
-      "dashboard",
       "media",
-      "modules",
-      "notif",
-      "notifications",
-      "notifs",
-      "osd",
-      "widgets"
+      "music",
+      "player",
+      "playback",
+      "audio",
+      "video",
+      "mpris"
     ],
-    "icon": "dashboard"
+    "icon": "music_note"
   },
   {
     "section": "notificationAnimationSpeed",
@@ -10331,7 +10327,7 @@
     "section": "_tab_32",
     "label": "Multiplexers",
     "tabIndex": 32,
-    "category": "System",
+    "category": "General",
     "keywords": [
       "linux",
       "multiplexers",
