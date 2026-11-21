@@ -31,6 +31,7 @@ Item {
             return source;
         return source;
     }
+    readonly property int status: iconImage.status
 
     implicitWidth: size
     implicitHeight: size

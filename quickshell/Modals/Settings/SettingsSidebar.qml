@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import qs.Common
-import qs.Modals.Settings
 import qs.Services
 import qs.Widgets
 
@@ -583,11 +582,11 @@ Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: Theme.spacingM
 
-                            DankIcon {
-                                name: resultDelegate.modelData.icon || "settings"
-                                size: Theme.iconSize - 2
-                                color: root.searchSelectedIndex === resultDelegate.index ? Theme.buttonText : Theme.surfaceText
-                                anchors.verticalCenter: parent.verticalCenter
+                            SettingsSidebarIcon {
+                                svgSource: ""
+                                fallbackIcon: resultDelegate.modelData.icon || "settings"
+                                isActive: root.searchSelectedIndex === resultDelegate.index
+                                isChild: false
                             }
 
                             Column {
@@ -717,11 +716,11 @@ Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: Theme.spacingM
 
-                            DankIcon {
-                                name: categoryDelegate.modelData.icon || ""
-                                size: Theme.iconSize - 2
-                                color: categoryRow.isActive ? Theme.buttonText : Theme.surfaceText
-                                anchors.verticalCenter: parent.verticalCenter
+                            SettingsSidebarIcon {
+                                svgSource: categoryDelegate.modelData.svgIcon || ""
+                                fallbackIcon: categoryDelegate.modelData.icon || ""
+                                isActive: categoryRow.isActive
+                                isChild: false
                             }
 
                             StyledText {
@@ -820,11 +819,11 @@ Rectangle {
                                     anchors.verticalCenter: parent.verticalCenter
                                     spacing: Theme.spacingM
 
-                                    DankIcon {
-                                        name: childDelegate.modelData.icon || ""
-                                        size: Theme.iconSize - 4
-                                        color: childDelegate.isActive ? Theme.buttonText : Theme.surfaceVariantText
-                                        anchors.verticalCenter: parent.verticalCenter
+                                    SettingsSidebarIcon {
+                                        svgSource: childDelegate.modelData.svgIcon || ""
+                                        fallbackIcon: childDelegate.modelData.icon || ""
+                                        isActive: childDelegate.isActive
+                                        isChild: true
                                     }
 
                                     StyledText {

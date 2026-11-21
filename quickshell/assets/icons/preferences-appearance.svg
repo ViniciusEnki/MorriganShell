@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="32" height="32" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="linear-gradient-1" x1="16" y1="30" x2="16" y2="2" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#171717"/>
+      <stop offset="1" stop-color="#303030"/>
+    </linearGradient>
+  </defs>
+  <title>preferences-template.svg</title>
+  <g id="Layer_1" data-name="Layer 1">
+    <image width="31" height="31" transform="matrix(1 0 0 1 0.5 1)" preserveAspectRatio="none" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB8AAAAfCAYAAAAfrhY5AAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAPdJREFUSMftl7GuwjAMRY9NXlk68P9fycBCaWsGbJTmwQIkMORKVqWo6rm+zWCLmVFKRATI61VZlD0ASXkmIjsgAXtgAHZvwBdgAs7AbGbLQ7h3m4DR6++DnV+Ak9ccKaTsxQQcHJzehJaKNBNwdDNoFnXZ8Scl/t0RGJ13g2dxJ+pqw1ERUb9cNTp+lsBeRFT9YGgAzg0MgARcG8M14DQE5wbuF+4r6vAO7/AO7/CqcGvMtYAbsDY0cOcFfGoMnwBTM1t9rr40MBBj9NnM1vjnc8zUleEbjnLbZZZsqK+RwGZxiM0lFa6O/qy6sfzWrlZzS/VL/U9XYfxzIl867ocAAAAASUVORK5CYII="/>
+    <path d="M9 2 L23 2 C26.866 2 30 5.134 30 9 L30 23 C30 26.866 26.866 30 23 30 L9 30 C5.134 30 2 26.866 2 23 L2 9 C2 5.134 5.134 2 9 2 Z" fill="url(#linear-gradient-1)"/>
+    <path d="M9 2 C5.122 2 2 5.122 2 9 L2 23 C2 26.878 5.122 30 9 30 L23 30 C26.878 30 30 26.878 30 23 L30 9 C30 5.122 26.878 2 23 2 Z M9 2.5 L23 2.5 C26.601 2.5 29.5 5.399 29.5 9 L29.5 23 C29.5 26.601 26.601 29.5 23 29.5 L9 29.5 C7.275 29.504 5.619 28.82 4.4 27.6 C3.18 26.381 2.496 24.725 2.5 23 L2.5 9 C2.5 5.399 5.399 2.5 9 2.5" fill="#ffffff" opacity="0.15"/>
+    <g id="Margin" display="none">
+      <path d="M5.544 24 L25.229 24 L25.229 30 L5.544 30 Z" fill="#ffffff"/>
+      <path d="M6.735 2 L26.421 2 L26.421 8 L6.735 8 Z" fill="#ffffff"/>
+      <path d="M24 2 L30 2 L30 30 L24 30 Z" fill="#ffffff"/>
+      <path d="M2 2.888 L8 2.888 L8 30 L2 30 Z" fill="#ffffff"/>
+    </g>
+    <path d="M16 7 C11.029 7 7 11.029 7 16 C7 20.971 11.029 25 16 25 C20.971 25 25 20.971 25 16 C25 11.029 20.971 7 16 7 M16 8 C20.418 8 24 11.582 24 16 C24 20.418 20.418 24 16 24 C11.582 24 8 20.418 8 16 C8 11.582 11.582 8 16 8" fill="#ffffff" fill-rule="evenodd"/>
+    <path d="M16 7 C11.029 7 7 11.029 7 16 C7 20.971 11.029 25 16 25 L16 20 C13.791 20 12 18.209 12 16 C12 13.791 13.791 12 16 12 Z M16 12 L16 20 C18.209 20 20 18.209 20 16 C20 13.791 18.209 12 16 12" fill="#ffffff" fill-rule="evenodd"/>
+  </g>
+</svg>
