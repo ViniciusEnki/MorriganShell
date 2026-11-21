@@ -128,6 +128,7 @@ Singleton {
                     "id": "typography",
                     "text": I18n.tr("Typography & Motion"),
                     "icon": "text_fields",
+                    "svgIcon": "preferences-typography.svg",
                     "tabIndex": 14
                 },
                 {
@@ -180,6 +181,7 @@ Singleton {
                     "id": "workspaces",
                     "text": I18n.tr("Workspaces"),
                     "icon": "view_module",
+                    "svgIcon": "preferences-workspaces.svg",
                     "tabIndex": 4
                 },
                 {
